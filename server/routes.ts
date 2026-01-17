@@ -421,7 +421,15 @@ export async function registerRoutes(
   // Update a lead
   app.patch("/api/leads/:id", async (req, res) => {
     try {
-      const lead = await storage.updateLead(req.params.id, req.body);
+      const validationResult = insertLeadSchema.partial().safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: "Validation failed", 
+          details: validationResult.error.errors 
+        });
+      }
+      
+      const lead = await storage.updateLead(req.params.id, validationResult.data);
       if (!lead) {
         return res.status(404).json({ error: "Lead not found" });
       }

@@ -116,7 +116,15 @@ export const leadsRelations = relations(leads, ({ one }) => ({
   }),
 }));
 
-export const insertLeadSchema = createInsertSchema(leads).omit({ id: true, createdAt: true, updatedAt: true });
+const leadStatusEnum = z.enum(["new", "contacted", "qualified", "enrolled", "lost"]);
+const leadSourceEnum = z.enum(["website", "phone", "referral", "event", "social", "other"]);
+
+export const insertLeadSchema = createInsertSchema(leads)
+  .omit({ id: true, createdAt: true, updatedAt: true })
+  .extend({
+    status: leadStatusEnum.default("new"),
+    source: leadSourceEnum.default("website"),
+  });
 export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type Lead = typeof leads.$inferSelect;
 

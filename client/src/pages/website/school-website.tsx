@@ -8,6 +8,7 @@ import { AwardsSection } from "@/components/website/awards-section";
 import { StatsSection } from "@/components/website/stats-section";
 import { NoticesSection } from "@/components/website/notices-section";
 import { CTASection } from "@/components/website/cta-section";
+import { InquirySection } from "@/components/website/inquiry-section";
 import { WebsiteFooter } from "@/components/website/website-footer";
 import type {
   School,
@@ -159,6 +160,8 @@ export default function SchoolWebsite() {
         )}
 
         <NoticesSection notices={publishedNotices} school={displaySchool} />
+
+        <InquirySection school={displaySchool} />
 
         {ctaSection ? (
           <CTASection
