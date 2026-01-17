@@ -16,8 +16,10 @@ import {
 } from "@/components/ui/form";
 import { useCMS } from "@/lib/cms-context";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Palette, Globe, Building2, MapPin, Phone, Mail, Clock } from "lucide-react";
+import { Save, Palette, Globe, Building2, MapPin, Phone, Mail, Clock, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const schoolSettingsSchema = z.object({
   name: z.string().min(1, "School name is required"),
@@ -54,17 +56,32 @@ export default function CMSSettings() {
     },
   });
 
-  const onSubmit = (values: SchoolSettingsValues) => {
-    if (currentSchool) {
-      setCurrentSchool({
-        ...currentSchool,
-        ...values,
+  const updateMutation = useMutation({
+    mutationFn: async (values: SchoolSettingsValues) => {
+      if (!currentSchool?.id) throw new Error("No school selected");
+      const res = await apiRequest("PATCH", `/api/schools/${currentSchool.id}`, values);
+      return res.json();
+    },
+    onSuccess: (updatedSchool) => {
+      setCurrentSchool(updatedSchool);
+      queryClient.invalidateQueries({ queryKey: ["/api/schools"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/public/school"] });
+      toast({
+        title: "Settings saved",
+        description: "Your school settings have been updated.",
       });
-    }
-    toast({
-      title: "Settings saved",
-      description: "Your school settings have been updated.",
-    });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error saving settings",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (values: SchoolSettingsValues) => {
+    updateMutation.mutate(values);
   };
 
   return (
@@ -388,9 +405,18 @@ export default function CMSSettings() {
               </Card>
 
               <div className="flex justify-end">
-                <Button type="submit" className="gap-1.5" data-testid="button-save-settings">
-                  <Save className="h-4 w-4" />
-                  Save Settings
+                <Button 
+                  type="submit" 
+                  className="gap-1.5" 
+                  data-testid="button-save-settings"
+                  disabled={updateMutation.isPending}
+                >
+                  {updateMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  {updateMutation.isPending ? "Saving..." : "Save Settings"}
                 </Button>
               </div>
             </form>
