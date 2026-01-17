@@ -16,13 +16,20 @@ import {
 } from "@/components/ui/form";
 import { useCMS } from "@/lib/cms-context";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Palette, Globe, Building2 } from "lucide-react";
+import { Save, Palette, Globe, Building2, MapPin, Phone, Mail, Clock } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 const schoolSettingsSchema = z.object({
   name: z.string().min(1, "School name is required"),
   slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers, and hyphens"),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color"),
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Must be a valid hex color"),
+  tagline: z.string().optional(),
+  description: z.string().optional(),
+  address: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  operatingHours: z.string().optional(),
 });
 
 type SchoolSettingsValues = z.infer<typeof schoolSettingsSchema>;
@@ -38,6 +45,12 @@ export default function CMSSettings() {
       slug: currentSchool?.slug || "",
       primaryColor: currentSchool?.primaryColor || "#1e40af",
       secondaryColor: currentSchool?.secondaryColor || "#3b82f6",
+      tagline: currentSchool?.tagline || "",
+      description: currentSchool?.description || "",
+      address: currentSchool?.address || "",
+      phone: currentSchool?.phone || "",
+      email: currentSchool?.email || "",
+      operatingHours: currentSchool?.operatingHours || "",
     },
   });
 
@@ -122,6 +135,149 @@ export default function CMSSettings() {
                         <FormDescription>
                           Only lowercase letters, numbers, and hyphens
                         </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="tagline"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tagline</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Excellence in Education"
+                            {...field}
+                            data-testid="input-school-tagline"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          A short phrase that appears below your school name
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Providing quality education since 1970. Nurturing minds, building character, and preparing students for a bright future."
+                            rows={3}
+                            {...field}
+                            data-testid="input-school-description"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          A brief description of your school for the website
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
+                      <MapPin className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-base">Contact Information</CardTitle>
+                      <CardDescription>Your school's contact details for the website</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="123 Education Lane, Springfield, ST 12345"
+                            rows={2}
+                            {...field}
+                            data-testid="input-school-address"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone Number</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <Input
+                                placeholder="+1 (555) 123-4567"
+                                {...field}
+                                data-testid="input-school-phone"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <Input
+                                placeholder="info@school.edu"
+                                type="email"
+                                {...field}
+                                data-testid="input-school-email"
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="operatingHours"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Operating Hours</FormLabel>
+                        <FormControl>
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                            <Input
+                              placeholder="Mon - Fri: 8:00 AM - 4:00 PM"
+                              {...field}
+                              data-testid="input-school-hours"
+                            />
+                          </div>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

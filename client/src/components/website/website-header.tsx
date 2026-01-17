@@ -32,13 +32,13 @@ export function WebsiteHeader({ school, isPreview }: WebsiteHeaderProps) {
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between py-2">
             <div className="flex items-center gap-6">
-              <a href="tel:+15551234567" className="flex items-center gap-2 hover:text-white transition-colors">
+              <a href={`tel:${school.phone || "+15551234567"}`} className="flex items-center gap-2 hover:text-white transition-colors">
                 <Phone className="h-3.5 w-3.5" />
-                +1 (555) 123-4567
+                {school.phone || "+1 (555) 123-4567"}
               </a>
-              <a href={`mailto:info@${school.slug}.edu`} className="flex items-center gap-2 hover:text-white transition-colors">
+              <a href={`mailto:${school.email || `info@${school.slug}.edu`}`} className="flex items-center gap-2 hover:text-white transition-colors">
                 <Mail className="h-3.5 w-3.5" />
-                info@{school.slug}.edu
+                {school.email || `info@${school.slug}.edu`}
               </a>
             </div>
             <div className="flex items-center gap-4">

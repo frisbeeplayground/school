@@ -29,6 +29,12 @@ export const schools = pgTable("schools", {
   logo: text("logo"),
   primaryColor: text("primary_color").notNull().default("#1e40af"),
   secondaryColor: text("secondary_color").notNull().default("#3b82f6"),
+  tagline: text("tagline").default("Excellence in Education"),
+  description: text("description"),
+  address: text("address"),
+  phone: text("phone"),
+  email: text("email"),
+  operatingHours: text("operating_hours"),
 });
 
 export const schoolsRelations = relations(schools, ({ many }) => ({

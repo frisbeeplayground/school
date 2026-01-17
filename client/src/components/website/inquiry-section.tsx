@@ -48,9 +48,9 @@ export function InquirySection({ school }: InquirySectionProps) {
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">Call Us</h4>
-                  <p className="text-gray-600 text-sm">Mon-Fri 8am to 5pm</p>
-                  <a href="tel:+1555000000" className="text-primary font-medium hover:underline">
-                    +1 (555) 000-0000
+                  <p className="text-gray-600 text-sm">{school.operatingHours || "Mon-Fri 8am to 5pm"}</p>
+                  <a href={`tel:${school.phone || "+1555000000"}`} className="text-primary font-medium hover:underline">
+                    {school.phone || "+1 (555) 000-0000"}
                   </a>
                 </div>
               </div>
@@ -65,8 +65,8 @@ export function InquirySection({ school }: InquirySectionProps) {
                 <div>
                   <h4 className="font-semibold text-gray-900">Email Us</h4>
                   <p className="text-gray-600 text-sm">We'll respond within 24 hours</p>
-                  <a href="mailto:admissions@school.edu" className="text-primary font-medium hover:underline">
-                    admissions@school.edu
+                  <a href={`mailto:${school.email || `admissions@${school.slug}.edu`}`} className="text-primary font-medium hover:underline">
+                    {school.email || `admissions@${school.slug}.edu`}
                   </a>
                 </div>
               </div>
@@ -81,7 +81,7 @@ export function InquirySection({ school }: InquirySectionProps) {
                 <div>
                   <h4 className="font-semibold text-gray-900">Visit Us</h4>
                   <p className="text-gray-600 text-sm">Campus tours available</p>
-                  <p className="text-gray-800">123 Education Lane, Springfield</p>
+                  <p className="text-gray-800">{school.address || "123 Education Lane, Springfield"}</p>
                 </div>
               </div>
             </div>

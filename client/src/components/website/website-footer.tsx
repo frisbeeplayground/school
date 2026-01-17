@@ -53,12 +53,11 @@ export function WebsiteFooter({ school }: WebsiteFooterProps) {
                 <span className="font-bold text-lg text-white block">
                   {school.name}
                 </span>
-                <span className="text-xs text-gray-500">Excellence in Education</span>
+                <span className="text-xs text-gray-500">{school.tagline || "Excellence in Education"}</span>
               </div>
             </div>
             <p className="text-sm text-gray-400 mb-6 leading-relaxed">
-              Providing quality education since 1970. Nurturing minds, building
-              character, and preparing students for a bright future.
+              {school.description || "Providing quality education. Nurturing minds, building character, and preparing students for a bright future."}
             </p>
             <div className="flex gap-2">
               <Button
@@ -141,21 +140,21 @@ export function WebsiteFooter({ school }: WebsiteFooterProps) {
                   <MapPin className="h-4 w-4 text-gray-400" />
                 </div>
                 <span className="text-sm text-gray-400">
-                  123 Education Lane, Springfield, ST 12345
+                  {school.address || "123 Education Lane, Springfield, ST 12345"}
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center shrink-0">
                   <Phone className="h-4 w-4 text-gray-400" />
                 </div>
-                <span className="text-sm text-gray-400">+1 (555) 123-4567</span>
+                <span className="text-sm text-gray-400">{school.phone || "+1 (555) 123-4567"}</span>
               </li>
               <li className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center shrink-0">
                   <Mail className="h-4 w-4 text-gray-400" />
                 </div>
                 <span className="text-sm text-gray-400">
-                  info@{school.slug}.edu
+                  {school.email || `info@${school.slug}.edu`}
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -163,7 +162,7 @@ export function WebsiteFooter({ school }: WebsiteFooterProps) {
                   <Clock className="h-4 w-4 text-gray-400" />
                 </div>
                 <span className="text-sm text-gray-400">
-                  Mon - Fri: 8:00 AM - 4:00 PM
+                  {school.operatingHours || "Mon - Fri: 8:00 AM - 4:00 PM"}
                 </span>
               </li>
             </ul>
