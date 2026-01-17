@@ -1,8 +1,7 @@
 import type { Notice, School } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Bell, Pin, FileDown, Calendar, ArrowRight } from "lucide-react";
+import { Bell, Pin, FileDown, Calendar, ArrowRight, Megaphone } from "lucide-react";
 import { format } from "date-fns";
 
 interface NoticesSectionProps {
@@ -17,63 +16,84 @@ export function NoticesSection({ notices, school }: NoticesSectionProps) {
   const sortedNotices = [...pinnedNotices, ...regularNotices];
 
   return (
-    <section className="py-20 bg-gray-50" id="notices">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between mb-10">
+    <section className="py-24 bg-gradient-to-b from-gray-50 to-white relative overflow-hidden" id="notices">
+      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white to-transparent" />
+      <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-tl from-yellow-100 to-transparent rounded-full blur-3xl opacity-50" />
+      
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-12">
           <div>
-            <span
-              className="inline-block text-sm font-semibold mb-2 px-3 py-1 rounded-full"
-              style={{
-                backgroundColor: `${school.primaryColor}15`,
-                color: school.primaryColor,
-              }}
-            >
+            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-medium rounded-full px-4 py-1.5 mb-4">
+              <Megaphone className="w-4 h-4" />
               Latest Updates
-            </span>
-            <h2 className="font-serif text-3xl md:text-4xl font-bold text-gray-900">
+            </div>
+            <h2 className="font-serif text-4xl md:text-5xl font-bold text-gray-900">
               Notice Board
             </h2>
           </div>
-          <Button variant="outline" className="gap-1.5" data-testid="button-view-all-notices">
-            View All
+          <Button 
+            variant="outline" 
+            className="gap-2 border-2 hover:bg-gray-50"
+            data-testid="button-view-all-notices"
+          >
+            View All Notices
             <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
 
         {sortedNotices.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">No notices available at this time.</p>
+          <Card className="p-16 text-center bg-white/80 backdrop-blur-sm border-dashed">
+            <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-6">
+              <Bell className="h-10 w-10 text-gray-400" />
+            </div>
+            <p className="text-gray-500 text-lg">No notices available at this time.</p>
+            <p className="text-gray-400 text-sm mt-2">Check back later for updates</p>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2">
             {sortedNotices.map((notice) => (
               <Card
                 key={notice.id}
-                className={`hover-elevate ${notice.pinned ? "border-l-4" : ""}`}
-                style={{
-                  borderLeftColor: notice.pinned ? school.primaryColor : undefined,
-                }}
+                className={`group hover-elevate bg-white hover:shadow-xl transition-all duration-300 overflow-visible ${
+                  notice.pinned ? "ring-2 ring-offset-2 ring-blue-500" : ""
+                }`}
                 data-testid={`card-website-notice-${notice.id}`}
               >
+                {notice.pinned && (
+                  <div 
+                    className="h-1 w-full"
+                    style={{ backgroundColor: school.primaryColor }}
+                  />
+                )}
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-start gap-3">
                       {notice.pinned && (
-                        <Pin
-                          className="h-4 w-4 rotate-45"
-                          style={{ color: school.primaryColor }}
-                        />
+                        <div 
+                          className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
+                          style={{ backgroundColor: `${school.primaryColor}15` }}
+                        >
+                          <Pin
+                            className="h-4 w-4 rotate-45"
+                            style={{ color: school.primaryColor }}
+                          />
+                        </div>
                       )}
-                      <CardTitle className="text-base font-semibold text-gray-900">
-                        {notice.title}
-                      </CardTitle>
+                      <div>
+                        <CardTitle className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                          {notice.title}
+                        </CardTitle>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                          <Calendar className="h-3.5 w-3.5" />
+                          <span>{format(new Date(notice.createdAt), "MMM d, yyyy")}</span>
+                        </div>
+                      </div>
                     </div>
                     {notice.fileUrl && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="shrink-0"
+                        className="shrink-0 hover:bg-blue-50 hover:text-blue-600"
                         asChild
                       >
                         <a href={notice.fileUrl} download>
@@ -84,13 +104,9 @@ export function NoticesSection({ notices, school }: NoticesSectionProps) {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                  <p className="text-gray-600 line-clamp-2 leading-relaxed">
                     {notice.description}
                   </p>
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>{format(new Date(notice.createdAt), "MMM d, yyyy")}</span>
-                  </div>
                 </CardContent>
               </Card>
             ))}

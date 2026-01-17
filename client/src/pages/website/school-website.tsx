@@ -4,6 +4,7 @@ import { WebsiteHeader } from "@/components/website/website-header";
 import { HeroSection } from "@/components/website/hero-section";
 import { FeaturesSection } from "@/components/website/features-section";
 import { AboutSection } from "@/components/website/about-section";
+import { AwardsSection } from "@/components/website/awards-section";
 import { StatsSection } from "@/components/website/stats-section";
 import { NoticesSection } from "@/components/website/notices-section";
 import { CTASection } from "@/components/website/cta-section";
@@ -45,10 +46,12 @@ export default function SchoolWebsite() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading website...</p>
+          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-white" />
+          </div>
+          <p className="text-gray-600 font-medium">Loading website...</p>
         </div>
       </div>
     );
@@ -58,6 +61,7 @@ export default function SchoolWebsite() {
     id: "1",
     name: "Springfield Academy",
     slug: "springfield",
+    logo: null,
     primaryColor: "#1e40af",
     secondaryColor: "#3b82f6",
   };
@@ -136,6 +140,8 @@ export default function SchoolWebsite() {
             school={displaySchool}
           />
         )}
+
+        <AwardsSection school={displaySchool} />
 
         {statsSection ? (
           <StatsSection
