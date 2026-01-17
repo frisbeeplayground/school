@@ -12,6 +12,7 @@ import CMSSections from "@/pages/cms/sections";
 import CMSNotices from "@/pages/cms/notices";
 import CMSApprovals from "@/pages/cms/approvals";
 import CMSSettings from "@/pages/cms/settings";
+import CMSLeads from "@/pages/cms/leads";
 import SchoolWebsite from "@/pages/website/school-website";
 
 function CMSRoutes() {
@@ -21,6 +22,7 @@ function CMSRoutes() {
         <Route path="/cms" component={CMSDashboard} />
         <Route path="/cms/sections" component={CMSSections} />
         <Route path="/cms/notices" component={CMSNotices} />
+        <Route path="/cms/leads" component={CMSLeads} />
         <Route path="/cms/approvals" component={CMSApprovals} />
         <Route path="/cms/settings" component={CMSSettings} />
         <Route component={CMSDashboard} />

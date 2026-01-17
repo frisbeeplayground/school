@@ -19,6 +19,7 @@ import {
   Eye,
   CheckSquare,
   GraduationCap,
+  Users,
 } from "lucide-react";
 import { EnvironmentBadge } from "./environment-badge";
 import { useCMS } from "@/lib/cms-context";
@@ -39,6 +40,11 @@ const menuItems = [
     title: "Notices",
     url: "/cms/notices",
     icon: Bell,
+  },
+  {
+    title: "Leads",
+    url: "/cms/leads",
+    icon: Users,
   },
   {
     title: "Approval Queue",
