@@ -1,0 +1,348 @@
+Excellent — this is a **very mature SaaS requirement**.
+What you’re asking for is essentially **staging + approval + future visual editing**, which is exactly how **enterprise CMS platforms** work.
+
+Below is a **clear, implementable design** that:
+
+* Keeps cost low **now**
+* Avoids rework **later**
+* Cleanly supports **sandbox → approval → publish**
+* Keeps scope open for **drag & drop** in later phases
+
+I’ll break this into **concept → data model → backend → frontend → future drag & drop**.
+
+---
+
+# 1️⃣ Concept: How Sandbox CMS Works (Plain English)
+
+You will have **two versions of content**:
+
+* **Sandbox (Draft / Preview)**
+  Used for testing, review, approval
+* **Live (Published)**
+  What the public website & app see
+
+Only **approved changes** move from sandbox → live.
+
+This is **non-negotiable** for:
+
+* Principals
+* Marketing teams
+* Multi-user schools
+
+---
+
+# 2️⃣ High-Level Architecture (With Sandbox)
+
+```
+                   CMS Admin Website
+          (Edit | Preview | Approve | Publish)
+                             │
+                   SaaS Backend API
+            (Sandbox | Live | Approval)
+                             │
+          ┌──────────────────┴──────────────────┐
+          ▼                                     ▼
+   Sandbox Website                       Live Website
+ (preview.yourdomain)             (abc.yourdomain.com)
+```
+
+📌 **Public website NEVER reads sandbox data**
+
+---
+
+# 3️⃣ Core Principle (Very Important)
+
+> **Sandbox and Live share the SAME SCHEMA**
+> Only the **state** is different
+
+This avoids duplication and bugs.
+
+---
+
+# 4️⃣ Database Design (Sandbox-Aware)
+
+## 4.1 Content Versioning Strategy (Simple & Safe)
+
+Every CMS entity gets:
+
+```sql
+environment TEXT -- 'sandbox' | 'live'
+status TEXT      -- 'draft' | 'pending_approval' | 'published'
+```
+
+---
+
+### Example: Page Sections Table
+
+```sql
+page_sections (
+  id UUID,
+  school_id UUID,
+  page_slug TEXT,
+  type TEXT,
+  position INT,
+  enabled BOOLEAN,
+  props_json JSONB,
+  environment TEXT,  -- sandbox / live
+  status TEXT,       -- draft / pending / published
+  updated_by UUID,
+  updated_at TIMESTAMP
+)
+```
+
+---
+
+### Notices Example
+
+```sql
+notices (
+  id UUID,
+  school_id UUID,
+  title TEXT,
+  description TEXT,
+  file_url TEXT,
+  pinned BOOLEAN,
+  environment TEXT,
+  status TEXT,
+  created_at TIMESTAMP
+)
+```
+
+---
+
+# 5️⃣ CMS Lifecycle (End-to-End Flow)
+
+### Step 1: Edit (Sandbox)
+
+* Editor edits content
+* Saved as:
+
+  ```
+  environment = sandbox
+  status = draft
+  ```
+
+---
+
+### Step 2: Preview (Sandbox Renderer)
+
+* CMS UI shows **Preview Website**
+* Reads only `sandbox` data
+* Same frontend code, different endpoint
+
+---
+
+### Step 3: Submit for Approval
+
+* Editor clicks **“Submit for Approval”**
+* Status becomes:
+
+  ```
+  status = pending_approval
+  ```
+
+---
+
+### Step 4: Approve & Publish
+
+* Admin/Owner approves
+* Backend:
+
+  * Copies sandbox → live
+  * Sets `status = published`
+  * Atomic transaction (important)
+
+---
+
+### Step 5: Live Website Updates
+
+* Live website reads:
+
+  ```
+  environment = live
+  status = published
+  ```
+
+No redeploy. No cache hacks.
+
+---
+
+# 6️⃣ Backend API Design (Sandbox-Safe)
+
+## 6.1 Admin APIs
+
+```http
+GET    /admin/cms?env=sandbox
+POST   /admin/cms/save
+POST   /admin/cms/submit
+POST   /admin/cms/approve
+```
+
+Approval endpoint:
+
+* Role check (ADMIN / OWNER)
+* Transactional publish
+
+---
+
+## 6.2 Public APIs (Read-Only)
+
+```http
+GET /public/cms/:schoolSlug
+```
+
+Internally hardcoded to:
+
+```
+environment = live
+status = published
+```
+
+🚫 Public API can NEVER see sandbox.
+
+---
+
+# 7️⃣ Frontend Website Strategy (Sandbox vs Live)
+
+### SAME codebase. TWO modes.
+
+| Mode    | Domain                   | API                      |
+| ------- | ------------------------ | ------------------------ |
+| Sandbox | preview.yourplatform.com | `/admin/cms?env=sandbox` |
+| Live    | abc.yourplatform.com     | `/public/cms/abc`        |
+
+This is powerful:
+
+* Exact visual parity
+* No mock UI
+* Zero drift
+
+---
+
+# 8️⃣ CMS Admin UI (Sandbox-Aware UX)
+
+### Required Buttons
+
+* 💾 Save Draft
+* 👁 Preview
+* 📤 Submit for Approval
+* ✅ Publish
+
+### Visual Indicators
+
+* “You are editing **Sandbox**”
+* “Pending approval by Admin”
+* Change history (later)
+
+---
+
+# 9️⃣ Roles & Approval Rules
+
+| Role   | Can Edit | Can Approve |
+| ------ | -------- | ----------- |
+| Editor | ✅        | ❌           |
+| Admin  | ✅        | ✅           |
+| Owner  | ✅        | ✅           |
+
+Enforced in backend only.
+
+---
+
+# 🔮 10️⃣ Keeping Scope Open for Drag & Drop (Very Important)
+
+You are already 80% ready for drag & drop **if you do this correctly now**.
+
+---
+
+## 10.1 Why Your Schema Is Drag-Drop Ready
+
+This already supports drag & drop:
+
+```json
+{
+  "type": "hero",
+  "position": 1,
+  "props": { ... }
+}
+```
+
+Drag & drop later will only:
+
+* Change `position`
+* Update `props_json`
+
+No schema change needed.
+
+---
+
+## 10.2 Future Drag & Drop Implementation (Phase 3)
+
+### CMS UI Upgrade
+
+* Use `react-beautiful-dnd` or `dnd-kit`
+* Drag sections
+* Update position values
+* Save to sandbox
+
+Backend remains unchanged.
+
+---
+
+# 11️⃣ Audit & Rollback (Easy Future Add)
+
+Later you can add:
+
+```sql
+cms_history (
+  id,
+  entity_id,
+  before_json,
+  after_json,
+  changed_by,
+  changed_at
+)
+```
+
+Allows:
+
+* Rollback
+* Who changed what
+* Compliance
+
+---
+
+# 12️⃣ Why This Is a VERY GOOD DESIGN
+
+You get:
+
+* ✅ Enterprise-style staging
+* ✅ Zero-risk publishing
+* ✅ Multi-user safety
+* ✅ Future visual editor support
+* ✅ No rework
+
+This is **exactly how Webflow, Contentful, Sanity** do it internally.
+
+---
+
+# 13️⃣ Clear Final Recommendation
+
+> ✅ Implement **Sandbox + Live from day one**
+> ✅ Use **environment + status flags**
+> ✅ Same frontend renderer for both
+> ❌ Do NOT fork codebases
+> ❌ Do NOT allow direct edits to live
+
+You are designing a **serious SaaS**, and this choice will save you months later.
+
+---
+
+## Next (Strongly Suggested)
+
+We should now:
+1️⃣ Finalize **approval workflow UX**
+2️⃣ Define **API contracts for sandbox publish**
+3️⃣ Decide **preview domain strategy**
+4️⃣ Design **Phase-1 vs Phase-3 drag & drop roadmap**
+
+Tell me which one you want next and I’ll go deep.
