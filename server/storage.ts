@@ -3,6 +3,7 @@ import {
   schools,
   pageSections,
   notices,
+  leads,
   type User,
   type InsertUser,
   type School,
@@ -11,9 +12,11 @@ import {
   type InsertPageSection,
   type Notice,
   type InsertNotice,
+  type Lead,
+  type InsertLead,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, count, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -40,6 +43,14 @@ export interface IStorage {
   createNotice(notice: InsertNotice): Promise<Notice>;
   updateNotice(id: string, data: Partial<InsertNotice>): Promise<Notice | undefined>;
   deleteNotice(id: string): Promise<boolean>;
+  
+  // Leads
+  getLeads(schoolId: string, status?: string): Promise<Lead[]>;
+  getLead(id: string): Promise<Lead | undefined>;
+  createLead(lead: InsertLead): Promise<Lead>;
+  updateLead(id: string, data: Partial<InsertLead>): Promise<Lead | undefined>;
+  deleteLead(id: string): Promise<boolean>;
+  getLeadStats(schoolId: string): Promise<{ status: string; count: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -145,6 +156,52 @@ export class DatabaseStorage implements IStorage {
   async deleteNotice(id: string): Promise<boolean> {
     const result = await db.delete(notices).where(eq(notices.id, id)).returning();
     return result.length > 0;
+  }
+
+  // Leads
+  async getLeads(schoolId: string, status?: string): Promise<Lead[]> {
+    if (status) {
+      return db.select().from(leads)
+        .where(and(eq(leads.schoolId, schoolId), eq(leads.status, status)))
+        .orderBy(desc(leads.createdAt));
+    }
+    return db.select().from(leads)
+      .where(eq(leads.schoolId, schoolId))
+      .orderBy(desc(leads.createdAt));
+  }
+
+  async getLead(id: string): Promise<Lead | undefined> {
+    const [lead] = await db.select().from(leads).where(eq(leads.id, id));
+    return lead || undefined;
+  }
+
+  async createLead(insertLead: InsertLead): Promise<Lead> {
+    const [lead] = await db.insert(leads).values(insertLead).returning();
+    return lead;
+  }
+
+  async updateLead(id: string, data: Partial<InsertLead>): Promise<Lead | undefined> {
+    const [lead] = await db.update(leads)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(leads.id, id))
+      .returning();
+    return lead || undefined;
+  }
+
+  async deleteLead(id: string): Promise<boolean> {
+    const result = await db.delete(leads).where(eq(leads.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async getLeadStats(schoolId: string): Promise<{ status: string; count: number }[]> {
+    const stats = await db.select({
+      status: leads.status,
+      count: count(),
+    })
+      .from(leads)
+      .where(eq(leads.schoolId, schoolId))
+      .groupBy(leads.status);
+    return stats.map(s => ({ status: s.status, count: Number(s.count) }));
   }
 }
 

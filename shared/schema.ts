@@ -91,10 +91,41 @@ export const insertNoticeSchema = createInsertSchema(notices).omit({ id: true, c
 export type InsertNotice = z.infer<typeof insertNoticeSchema>;
 export type Notice = typeof notices.$inferSelect;
 
+// Leads table
+export const leads = pgTable("leads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  schoolId: varchar("school_id").notNull().references(() => schools.id),
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  source: text("source").notNull().default("website"),
+  status: text("status").notNull().default("new"),
+  gradeInterest: text("grade_interest"),
+  message: text("message"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  assignedTo: varchar("assigned_to"),
+});
+
+export const leadsRelations = relations(leads, ({ one }) => ({
+  school: one(schools, {
+    fields: [leads.schoolId],
+    references: [schools.id],
+  }),
+}));
+
+export const insertLeadSchema = createInsertSchema(leads).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertLead = z.infer<typeof insertLeadSchema>;
+export type Lead = typeof leads.$inferSelect;
+
 // Types for frontend
 export type Environment = "sandbox" | "live";
 export type ContentStatus = "draft" | "pending_approval" | "published";
 export type UserRole = "editor" | "admin" | "owner";
+export type LeadStatus = "new" | "contacted" | "qualified" | "enrolled" | "lost";
+export type LeadSource = "website" | "phone" | "referral" | "event" | "social" | "other";
 
 export type SectionType = 
   | "hero" 

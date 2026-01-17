@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPageSectionSchema, insertNoticeSchema, insertSchoolSchema } from "@shared/schema";
+import { insertPageSectionSchema, insertNoticeSchema, insertSchoolSchema, insertLeadSchema } from "@shared/schema";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -325,7 +325,159 @@ export async function registerRoutes(
     }
   });
 
+  // ============ LEADS API ROUTES ============
+
+  // Get all leads for a school
+  app.get("/api/leads", async (req, res) => {
+    try {
+      const schoolId = req.query.schoolId as string || "1";
+      const status = req.query.status as string;
+      
+      let school = await storage.getSchool(schoolId);
+      if (!school) {
+        school = await storage.getSchoolBySlug("springfield");
+      }
+      
+      if (!school) {
+        return res.json([]);
+      }
+      
+      const leadsList = await storage.getLeads(school.id, status);
+      res.json(leadsList);
+    } catch (error) {
+      console.error("Error fetching leads:", error);
+      res.status(500).json({ error: "Failed to fetch leads" });
+    }
+  });
+
+  // Get lead stats/analytics
+  app.get("/api/leads/stats", async (req, res) => {
+    try {
+      const schoolId = req.query.schoolId as string || "1";
+      
+      let school = await storage.getSchool(schoolId);
+      if (!school) {
+        school = await storage.getSchoolBySlug("springfield");
+      }
+      
+      if (!school) {
+        return res.json([]);
+      }
+      
+      const stats = await storage.getLeadStats(school.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching lead stats:", error);
+      res.status(500).json({ error: "Failed to fetch lead stats" });
+    }
+  });
+
+  // Get a single lead
+  app.get("/api/leads/:id", async (req, res) => {
+    try {
+      const lead = await storage.getLead(req.params.id);
+      if (!lead) {
+        return res.status(404).json({ error: "Lead not found" });
+      }
+      res.json(lead);
+    } catch (error) {
+      console.error("Error fetching lead:", error);
+      res.status(500).json({ error: "Failed to fetch lead" });
+    }
+  });
+
+  // Create a new lead
+  app.post("/api/leads", async (req, res) => {
+    try {
+      let schoolId = req.body.schoolId;
+      if (!schoolId || schoolId === "1") {
+        const school = await storage.getSchoolBySlug("springfield");
+        if (school) {
+          schoolId = school.id;
+        }
+      }
+      
+      const leadData = {
+        ...req.body,
+        schoolId,
+      };
+      
+      const validationResult = insertLeadSchema.safeParse(leadData);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: "Validation failed", 
+          details: validationResult.error.errors 
+        });
+      }
+      
+      const lead = await storage.createLead(validationResult.data);
+      res.status(201).json(lead);
+    } catch (error) {
+      console.error("Error creating lead:", error);
+      res.status(500).json({ error: "Failed to create lead" });
+    }
+  });
+
+  // Update a lead
+  app.patch("/api/leads/:id", async (req, res) => {
+    try {
+      const lead = await storage.updateLead(req.params.id, req.body);
+      if (!lead) {
+        return res.status(404).json({ error: "Lead not found" });
+      }
+      res.json(lead);
+    } catch (error) {
+      console.error("Error updating lead:", error);
+      res.status(500).json({ error: "Failed to update lead" });
+    }
+  });
+
+  // Delete a lead
+  app.delete("/api/leads/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteLead(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Lead not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting lead:", error);
+      res.status(500).json({ error: "Failed to delete lead" });
+    }
+  });
+
   // ============ PUBLIC API ROUTES ============
+
+  // Public lead submission (for website inquiry forms)
+  app.post("/api/public/leads/:slug", async (req, res) => {
+    try {
+      const school = await storage.getSchoolBySlug(req.params.slug);
+      if (!school) {
+        return res.status(404).json({ error: "School not found" });
+      }
+      
+      const leadData = {
+        ...req.body,
+        schoolId: school.id,
+        source: req.body.source || "website",
+        status: "new",
+      };
+      
+      const validationResult = insertLeadSchema.safeParse(leadData);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          error: "Validation failed", 
+          details: validationResult.error.errors 
+        });
+      }
+      
+      const lead = await storage.createLead(validationResult.data);
+      res.status(201).json({ success: true, message: "Thank you for your inquiry! We will contact you soon." });
+    } catch (error) {
+      console.error("Error creating public lead:", error);
+      res.status(500).json({ error: "Failed to submit inquiry" });
+    }
+  });
   
   app.get("/api/public/school/:slug", async (req, res) => {
     try {
