@@ -55,10 +55,19 @@ interface DashboardStats {
   classCount: number;
 }
 
+interface ProgressToken {
+  id: string;
+  studentId: string;
+  token: string;
+  expiresAt: string | null;
+  isRevoked: boolean;
+}
+
 export default function StudentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [currentToken, setCurrentToken] = useState<string | null>(null);
   const [showIdCard, setShowIdCard] = useState(false);
   const [showQRDialog, setShowQRDialog] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -72,16 +81,64 @@ export default function StudentsPage() {
     queryKey: ["/api/students", statusFilter !== "all" ? statusFilter : undefined],
   });
 
-  const generatePortalLink = (student: Student) => {
-    return `${window.location.origin}/portal/${student.id}`;
+  const generateTokenMutation = useMutation({
+    mutationFn: async (studentId: string) => {
+      const response = await apiRequest("POST", "/api/progress-tokens", {
+        studentId,
+        expiresAt: null,
+      });
+      return response.json() as Promise<ProgressToken>;
+    },
+    onSuccess: (token) => {
+      setCurrentToken(token.token);
+      queryClient.invalidateQueries({ queryKey: ["/api/students", selectedStudent?.id, "progress-tokens"] });
+    },
+    onError: () => {
+      toast({ title: "Failed to generate access token", variant: "destructive" });
+    },
+  });
+
+  const fetchOrGenerateToken = async (student: Student) => {
+    try {
+      const response = await fetch(`/api/students/${student.id}/progress-tokens`);
+      const tokens: ProgressToken[] = await response.json();
+      const activeToken = tokens.find((t) => !t.isRevoked && (!t.expiresAt || new Date(t.expiresAt) > new Date()));
+      
+      if (activeToken) {
+        setCurrentToken(activeToken.token);
+      } else {
+        generateTokenMutation.mutate(student.id);
+      }
+    } catch (error) {
+      generateTokenMutation.mutate(student.id);
+    }
   };
 
-  const copyPortalLink = async (student: Student) => {
-    const link = generatePortalLink(student);
+  const generatePortalLink = (token: string) => {
+    return `${window.location.origin}/portal/${token}`;
+  };
+
+  const copyPortalLink = async () => {
+    if (!currentToken) return;
+    const link = generatePortalLink(currentToken);
     await navigator.clipboard.writeText(link);
     setCopiedLink(true);
     toast({ title: "Portal link copied to clipboard!" });
     setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const openQRDialog = async (student: Student) => {
+    setSelectedStudent(student);
+    setCurrentToken(null);
+    setShowQRDialog(true);
+    await fetchOrGenerateToken(student);
+  };
+
+  const openIdCard = async (student: Student) => {
+    setSelectedStudent(student);
+    setCurrentToken(null);
+    setShowIdCard(true);
+    await fetchOrGenerateToken(student);
   };
 
   const filteredStudents = students.filter((student) => {
@@ -290,27 +347,13 @@ export default function StudentsPage() {
                                   </Link>
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedStudent(student);
-                                    setShowIdCard(true);
-                                  }}
-                                >
+                                <DropdownMenuItem onClick={() => openIdCard(student)}>
                                   <CreditCard className="h-4 w-4 mr-2" />
                                   View ID Card
                                 </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedStudent(student);
-                                    setShowQRDialog(true);
-                                  }}
-                                >
+                                <DropdownMenuItem onClick={() => openQRDialog(student)}>
                                   <QrCode className="h-4 w-4 mr-2" />
                                   Portal QR Code
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => copyPortalLink(student)}>
-                                  <LinkIcon className="h-4 w-4 mr-2" />
-                                  Copy Portal Link
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-destructive">
@@ -365,14 +408,18 @@ export default function StudentsPage() {
           </DialogHeader>
           {selectedStudent && (
             <div className="flex flex-col items-center gap-4">
-              <StudentIdCard student={selectedStudent} />
+              <StudentIdCard
+                student={selectedStudent}
+                portalUrl={currentToken ? generatePortalLink(currentToken) : undefined}
+              />
               <div className="flex gap-2">
                 <Button variant="outline" onClick={() => window.print()}>
                   Print ID Card
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => copyPortalLink(selectedStudent)}
+                  onClick={copyPortalLink}
+                  disabled={!currentToken}
                 >
                   {copiedLink ? (
                     <>
@@ -402,41 +449,49 @@ export default function StudentsPage() {
           </DialogHeader>
           {selectedStudent && (
             <div className="flex flex-col items-center gap-4 py-4">
-              <div className="p-4 bg-white rounded-lg border">
-                <QRCode
-                  value={generatePortalLink(selectedStudent)}
-                  size={200}
-                  level="H"
-                />
-              </div>
-              <div className="text-center">
-                <p className="font-medium">
-                  {selectedStudent.firstName} {selectedStudent.lastName}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {selectedStudent.studentId}
-                </p>
-              </div>
-              <p className="text-sm text-muted-foreground text-center">
-                Parents can scan this QR code to access the student's progress portal.
-              </p>
-              <Button
-                variant="outline"
-                onClick={() => copyPortalLink(selectedStudent)}
-                className="w-full"
-              >
-                {copiedLink ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    Link Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy Portal Link
-                  </>
-                )}
-              </Button>
+              {currentToken ? (
+                <>
+                  <div className="p-4 bg-white rounded-lg border">
+                    <QRCode
+                      value={generatePortalLink(currentToken)}
+                      size={200}
+                      level="H"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <p className="font-medium">
+                      {selectedStudent.firstName} {selectedStudent.lastName}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedStudent.studentId}
+                    </p>
+                  </div>
+                  <p className="text-sm text-muted-foreground text-center">
+                    Parents can scan this QR code to access the student's progress portal.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={copyPortalLink}
+                    className="w-full"
+                  >
+                    {copiedLink ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Link Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4 mr-2" />
+                        Copy Portal Link
+                      </>
+                    )}
+                  </Button>
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-muted-foreground">Generating access token...</p>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

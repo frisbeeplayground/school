@@ -17,8 +17,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript
-- **Routing**: Wouter (lightweight React router)
-- **State Management**: TanStack Query for server state, React Context for UI state (theme, CMS environment)
+- **Routing**: Wouter (lightweight React router) with flat route structure using `withCMSLayout` HOC wrapper for CMS pages
+- **State Management**: TanStack Query for server state, React Context for UI state (theme, CMS environment, current school)
 - **UI Components**: shadcn/ui component library with Radix UI primitives
 - **Styling**: Tailwind CSS with CSS variables for theming, supporting light/dark modes
 - **Build Tool**: Vite with HMR support
@@ -35,14 +35,33 @@ The core entities are:
 - **Page Sections** - Configurable content blocks (hero, features, about, gallery, etc.) with position ordering
 - **Notices** - Announcements with pinning and file attachments
 - **Users** - Authentication with role-based access (editor, admin roles implied)
+- **Leads** - Prospective inquiry tracking with status workflow
+
+**Student Management System (SMS) Entities:**
+- **Students** - Student records with auto-generated IDs (STU{YY}{0000}) and status tracking (active/inactive/graduated/transferred)
+- **Guardians** - Parent/guardian contact information
+- **StudentGuardians** - Many-to-many linking between students and guardians with relationship types
+- **Classes** - Class/section management with capacity tracking
+- **Enrollments** - Student-class associations with roll numbers and status workflow
+- **Admissions** - Application pipeline with 9-stage workflow (inquiry→applied→documents_pending→under_review→interview_scheduled→accepted→enrolled→rejected→withdrawn)
+- **Subjects** - Academic subjects with optional teacher assignment
+- **Attendance** - Daily attendance tracking with multiple statuses (present/absent/late/excused/half_day)
+- **Grades** - Academic performance records with exam types and terms
+- **ProgressTokens** - Secure tokens for parent portal QR-based access with expiration and revocation
 
 Content supports dual environments (`sandbox` | `live`) and status workflow (`draft` | `pending_approval` | `published`).
 
 ### Routing Structure
 - `/` - Landing page
 - `/cms/*` - Admin CMS interface (dashboard, sections, notices, approvals, settings)
+- `/cms/students` - Student directory with search, filters, QR code generation, and ID card view
+- `/cms/students/new` - Student registration form
+- `/cms/admissions` - Admission applications pipeline with 9-stage workflow
+- `/cms/classes` - Class/section management
+- `/cms/attendance` - Daily attendance marking interface with date navigation
 - `/site/:slug` - Live public website per school
 - `/preview/:slug` - Sandbox preview per school
+- `/portal/:token` - Parent portal access via secure progress token (QR-based access)
 
 ### Design System
 - **CMS Admin**: Material Design principles - Inter font, information-dense layouts, clear workflow states
@@ -60,6 +79,7 @@ Content supports dual environments (`sandbox` | `live`) and status workflow (`dr
 - `react-hook-form` / `@hookform/resolvers` - Form handling with Zod validation
 - `date-fns` - Date formatting utilities
 - `express-session` / `connect-pg-simple` - Session management (prepared for auth)
+- `qrcode` - QR code generation for parent portal access tokens
 - Full shadcn/ui component set via Radix UI primitives
 
 ### Development Tools

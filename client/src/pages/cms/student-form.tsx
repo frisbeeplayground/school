@@ -13,6 +13,7 @@ import { ArrowLeft, Save, User } from "lucide-react";
 import { Link } from "wouter";
 import type { Student } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useCMS } from "@/lib/cms-context";
 
 interface StudentFormData {
   firstName: string;
@@ -29,6 +30,7 @@ export default function StudentFormPage() {
   const params = useParams<{ id?: string }>();
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { currentSchool } = useCMS();
   const isEditing = params.id && params.id !== "new";
 
   const { data: student, isLoading: loadingStudent } = useQuery<Student>({
@@ -63,7 +65,16 @@ export default function StudentFormPage() {
 
   const createMutation = useMutation({
     mutationFn: async (data: StudentFormData) => {
-      return apiRequest("POST", "/api/students", data);
+      const cleanedData = {
+        ...data,
+        schoolId: currentSchool?.id,
+        dateOfBirth: data.dateOfBirth || null,
+        gender: data.gender || null,
+        bloodGroup: data.bloodGroup || null,
+        address: data.address || null,
+        medicalNotes: data.medicalNotes || null,
+      };
+      return apiRequest("POST", "/api/students", cleanedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });
@@ -78,7 +89,15 @@ export default function StudentFormPage() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: StudentFormData) => {
-      return apiRequest("PATCH", `/api/students/${params.id}`, data);
+      const cleanedData = {
+        ...data,
+        dateOfBirth: data.dateOfBirth || null,
+        gender: data.gender || null,
+        bloodGroup: data.bloodGroup || null,
+        address: data.address || null,
+        medicalNotes: data.medicalNotes || null,
+      };
+      return apiRequest("PATCH", `/api/students/${params.id}`, cleanedData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/students"] });

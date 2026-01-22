@@ -16,8 +16,15 @@ export function CMSProvider({ children }: { children: React.ReactNode }) {
     id: "1",
     name: "Springfield Academy",
     slug: "springfield",
+    logo: null,
     primaryColor: "#1e40af",
     secondaryColor: "#3b82f6",
+    tagline: null,
+    description: null,
+    address: null,
+    phone: null,
+    email: null,
+    operatingHours: null,
   });
 
   return (

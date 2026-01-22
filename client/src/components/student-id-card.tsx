@@ -11,7 +11,8 @@ interface StudentIdCardProps {
 }
 
 export function StudentIdCard({ student, schoolName = "School CMS", portalUrl }: StudentIdCardProps) {
-  const qrValue = portalUrl || `${window.location.origin}/portal/${student.id}`;
+  const qrValue = portalUrl || "";
+  const showQR = !!qrValue;
 
   return (
     <Card className="w-[350px] overflow-hidden" data-testid={`id-card-${student.id}`}>
@@ -48,7 +49,13 @@ export function StudentIdCard({ student, schoolName = "School CMS", portalUrl }:
             )}
           </div>
           <div className="flex flex-col items-center gap-1">
-            <QRCode value={qrValue} size={90} />
+            {showQR ? (
+              <QRCode value={qrValue} size={90} />
+            ) : (
+              <div className="w-[90px] h-[90px] bg-muted rounded flex items-center justify-center">
+                <span className="text-xs text-muted-foreground animate-pulse">Loading...</span>
+              </div>
+            )}
             <p className="text-[10px] text-muted-foreground text-center">
               Scan for<br />Progress Portal
             </p>
@@ -65,7 +72,8 @@ export function StudentIdCard({ student, schoolName = "School CMS", portalUrl }:
 }
 
 export function StudentIdCardPrintable({ student, schoolName = "School CMS", portalUrl }: StudentIdCardProps) {
-  const qrValue = portalUrl || `${window.location.origin}/portal/${student.id}`;
+  const qrValue = portalUrl || "";
+  const showQR = !!qrValue;
 
   return (
     <div
@@ -100,7 +108,13 @@ export function StudentIdCardPrintable({ student, schoolName = "School CMS", por
         </div>
         <div className="flex flex-col items-center">
           <div className="bg-white p-0.5">
-            <QRCode value={qrValue} size={65} level="H" />
+            {showQR ? (
+              <QRCode value={qrValue} size={65} level="H" />
+            ) : (
+              <div className="w-[65px] h-[65px] bg-gray-200 rounded flex items-center justify-center">
+                <span className="text-[8px] text-gray-400">Loading</span>
+              </div>
+            )}
           </div>
           <p className="text-[8px] text-gray-500 text-center mt-0.5">
             Scan for Progress

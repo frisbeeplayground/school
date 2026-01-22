@@ -21,35 +21,45 @@ import CMSAttendance from "@/pages/cms/attendance";
 import SchoolWebsite from "@/pages/website/school-website";
 import ParentPortal from "@/pages/portal/parent-portal";
 
-function CMSRoutes() {
-  return (
-    <CMSLayout>
-      <Switch>
-        <Route path="/cms" component={CMSDashboard} />
-        <Route path="/cms/sections" component={CMSSections} />
-        <Route path="/cms/notices" component={CMSNotices} />
-        <Route path="/cms/leads" component={CMSLeads} />
-        <Route path="/cms/approvals" component={CMSApprovals} />
-        <Route path="/cms/settings" component={CMSSettings} />
-        <Route path="/cms/students" component={CMSStudents} />
-        <Route path="/cms/students/new" component={CMSStudentForm} />
-        <Route path="/cms/students/:id" component={CMSStudentForm} />
-        <Route path="/cms/students/:id/edit" component={CMSStudentForm} />
-        <Route path="/cms/admissions" component={CMSAdmissions} />
-        <Route path="/cms/classes" component={CMSClasses} />
-        <Route path="/cms/attendance" component={CMSAttendance} />
-        <Route component={CMSDashboard} />
-      </Switch>
-    </CMSLayout>
-  );
+function withCMSLayout(Component: React.ComponentType) {
+  return function WrappedComponent() {
+    return (
+      <CMSLayout>
+        <Component />
+      </CMSLayout>
+    );
+  };
 }
+
+const CMSDashboardPage = withCMSLayout(CMSDashboard);
+const CMSSectionsPage = withCMSLayout(CMSSections);
+const CMSNoticesPage = withCMSLayout(CMSNotices);
+const CMSLeadsPage = withCMSLayout(CMSLeads);
+const CMSApprovalsPage = withCMSLayout(CMSApprovals);
+const CMSSettingsPage = withCMSLayout(CMSSettings);
+const CMSStudentsPage = withCMSLayout(CMSStudents);
+const CMSStudentFormPage = withCMSLayout(CMSStudentForm);
+const CMSAdmissionsPage = withCMSLayout(CMSAdmissions);
+const CMSClassesPage = withCMSLayout(CMSClasses);
+const CMSAttendancePage = withCMSLayout(CMSAttendance);
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/cms" component={CMSRoutes} />
-      <Route path="/cms/:rest*" component={CMSRoutes} />
+      <Route path="/cms" component={CMSDashboardPage} />
+      <Route path="/cms/sections" component={CMSSectionsPage} />
+      <Route path="/cms/notices" component={CMSNoticesPage} />
+      <Route path="/cms/leads" component={CMSLeadsPage} />
+      <Route path="/cms/approvals" component={CMSApprovalsPage} />
+      <Route path="/cms/settings" component={CMSSettingsPage} />
+      <Route path="/cms/students/new" component={CMSStudentFormPage} />
+      <Route path="/cms/students/:id/edit" component={CMSStudentFormPage} />
+      <Route path="/cms/students/:id" component={CMSStudentFormPage} />
+      <Route path="/cms/students" component={CMSStudentsPage} />
+      <Route path="/cms/admissions" component={CMSAdmissionsPage} />
+      <Route path="/cms/classes" component={CMSClassesPage} />
+      <Route path="/cms/attendance" component={CMSAttendancePage} />
       <Route path="/site/:slug" component={SchoolWebsite} />
       <Route path="/preview/:slug?" component={SchoolWebsite} />
       <Route path="/portal/:token" component={ParentPortal} />
