@@ -6,12 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import {
   GraduationCap,
   UserPlus,
   Users,
-  TrendingUp,
   CalendarCheck,
   BookOpen,
   Search,
@@ -20,6 +20,11 @@ import {
   Eye,
   Edit2,
   Trash2,
+  QrCode,
+  CreditCard,
+  Link as LinkIcon,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Link } from "wouter";
 import { format } from "date-fns";
@@ -29,8 +34,18 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { StudentIdCard } from "@/components/student-id-card";
+import { QRCode } from "@/components/qr-code";
 
 interface DashboardStats {
   totalStudents: number;
@@ -43,6 +58,11 @@ interface DashboardStats {
 export default function StudentsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [showIdCard, setShowIdCard] = useState(false);
+  const [showQRDialog, setShowQRDialog] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const { toast } = useToast();
 
   const { data: stats } = useQuery<DashboardStats>({
     queryKey: ["/api/students/dashboard-stats"],
@@ -51,6 +71,18 @@ export default function StudentsPage() {
   const { data: students = [], isLoading } = useQuery<Student[]>({
     queryKey: ["/api/students", statusFilter !== "all" ? statusFilter : undefined],
   });
+
+  const generatePortalLink = (student: Student) => {
+    return `${window.location.origin}/portal/${student.id}`;
+  };
+
+  const copyPortalLink = async (student: Student) => {
+    const link = generatePortalLink(student);
+    await navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    toast({ title: "Portal link copied to clipboard!" });
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
 
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
@@ -257,6 +289,30 @@ export default function StudentsPage() {
                                     Edit
                                   </Link>
                                 </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedStudent(student);
+                                    setShowIdCard(true);
+                                  }}
+                                >
+                                  <CreditCard className="h-4 w-4 mr-2" />
+                                  View ID Card
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => {
+                                    setSelectedStudent(student);
+                                    setShowQRDialog(true);
+                                  }}
+                                >
+                                  <QrCode className="h-4 w-4 mr-2" />
+                                  Portal QR Code
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => copyPortalLink(student)}>
+                                  <LinkIcon className="h-4 w-4 mr-2" />
+                                  Copy Portal Link
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-destructive">
                                   <Trash2 className="h-4 w-4 mr-2" />
                                   Delete
@@ -298,6 +354,93 @@ export default function StudentsPage() {
           </Card>
         </div>
       </div>
+
+      <Dialog open={showIdCard} onOpenChange={setShowIdCard}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-primary" />
+              Student ID Card
+            </DialogTitle>
+          </DialogHeader>
+          {selectedStudent && (
+            <div className="flex flex-col items-center gap-4">
+              <StudentIdCard student={selectedStudent} />
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => window.print()}>
+                  Print ID Card
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => copyPortalLink(selectedStudent)}
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check className="h-4 w-4 mr-2" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copy Link
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
+        <DialogContent className="sm:max-w-[350px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <QrCode className="h-5 w-5 text-primary" />
+              Parent Portal Access
+            </DialogTitle>
+          </DialogHeader>
+          {selectedStudent && (
+            <div className="flex flex-col items-center gap-4 py-4">
+              <div className="p-4 bg-white rounded-lg border">
+                <QRCode
+                  value={generatePortalLink(selectedStudent)}
+                  size={200}
+                  level="H"
+                />
+              </div>
+              <div className="text-center">
+                <p className="font-medium">
+                  {selectedStudent.firstName} {selectedStudent.lastName}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {selectedStudent.studentId}
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                Parents can scan this QR code to access the student's progress portal.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => copyPortalLink(selectedStudent)}
+                className="w-full"
+              >
+                {copiedLink ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Link Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Portal Link
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
