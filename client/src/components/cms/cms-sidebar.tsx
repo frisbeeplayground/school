@@ -20,6 +20,10 @@ import {
   CheckSquare,
   GraduationCap,
   Users,
+  UserPlus,
+  BookOpen,
+  CalendarCheck,
+  ClipboardList,
 } from "lucide-react";
 import { EnvironmentBadge } from "./environment-badge";
 import { useCMS } from "@/lib/cms-context";
@@ -50,6 +54,29 @@ const menuItems = [
     title: "Approval Queue",
     url: "/cms/approvals",
     icon: CheckSquare,
+  },
+];
+
+const studentMenuItems = [
+  {
+    title: "Students",
+    url: "/cms/students",
+    icon: GraduationCap,
+  },
+  {
+    title: "Admissions",
+    url: "/cms/admissions",
+    icon: UserPlus,
+  },
+  {
+    title: "Classes",
+    url: "/cms/classes",
+    icon: BookOpen,
+  },
+  {
+    title: "Attendance",
+    url: "/cms/attendance",
+    icon: CalendarCheck,
   },
 ];
 
@@ -110,6 +137,27 @@ export function CMSSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={location === item.url}
+                  >
+                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s/g, '-')}`}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Student Management</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {studentMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location === item.url || location.startsWith(item.url + '/')}
                   >
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s/g, '-')}`}>
                       <item.icon className="h-4 w-4" />

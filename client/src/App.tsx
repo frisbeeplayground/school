@@ -13,7 +13,13 @@ import CMSNotices from "@/pages/cms/notices";
 import CMSApprovals from "@/pages/cms/approvals";
 import CMSSettings from "@/pages/cms/settings";
 import CMSLeads from "@/pages/cms/leads";
+import CMSStudents from "@/pages/cms/students";
+import CMSStudentForm from "@/pages/cms/student-form";
+import CMSAdmissions from "@/pages/cms/admissions";
+import CMSClasses from "@/pages/cms/classes";
+import CMSAttendance from "@/pages/cms/attendance";
 import SchoolWebsite from "@/pages/website/school-website";
+import ParentPortal from "@/pages/portal/parent-portal";
 
 function CMSRoutes() {
   return (
@@ -25,6 +31,13 @@ function CMSRoutes() {
         <Route path="/cms/leads" component={CMSLeads} />
         <Route path="/cms/approvals" component={CMSApprovals} />
         <Route path="/cms/settings" component={CMSSettings} />
+        <Route path="/cms/students" component={CMSStudents} />
+        <Route path="/cms/students/new" component={CMSStudentForm} />
+        <Route path="/cms/students/:id" component={CMSStudentForm} />
+        <Route path="/cms/students/:id/edit" component={CMSStudentForm} />
+        <Route path="/cms/admissions" component={CMSAdmissions} />
+        <Route path="/cms/classes" component={CMSClasses} />
+        <Route path="/cms/attendance" component={CMSAttendance} />
         <Route component={CMSDashboard} />
       </Switch>
     </CMSLayout>
@@ -39,6 +52,7 @@ function Router() {
       <Route path="/cms/:rest*" component={CMSRoutes} />
       <Route path="/site/:slug" component={SchoolWebsite} />
       <Route path="/preview/:slug?" component={SchoolWebsite} />
+      <Route path="/portal/:token" component={ParentPortal} />
       <Route component={NotFound} />
     </Switch>
   );
