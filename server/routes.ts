@@ -1396,8 +1396,9 @@ export async function registerRoutes(
         return res.json([]);
       }
       
-      // Only return live, published sections
-      const sections = await storage.getSections(school.id, "live");
+      // Support env query param for preview (sandbox) vs live
+      const env = req.query.env === "sandbox" ? "sandbox" : "live";
+      const sections = await storage.getSections(school.id, env);
       const publishedSections = sections.filter(s => s.status === "published");
       res.json(publishedSections);
     } catch (error) {
@@ -1413,8 +1414,9 @@ export async function registerRoutes(
         return res.json([]);
       }
       
-      // Only return live, published notices
-      const noticesList = await storage.getNotices(school.id, "live");
+      // Support env query param for preview (sandbox) vs live
+      const env = req.query.env === "sandbox" ? "sandbox" : "live";
+      const noticesList = await storage.getNotices(school.id, env);
       const publishedNotices = noticesList.filter(n => n.status === "published");
       res.json(publishedNotices);
     } catch (error) {

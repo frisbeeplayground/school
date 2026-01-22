@@ -26,6 +26,7 @@ export default function SchoolWebsite() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug || "springfield";
   const isPreview = window.location.pathname.includes("/preview");
+  const env = isPreview ? "sandbox" : "live";
 
   const { data: school, isLoading: schoolLoading } = useQuery<School>({
     queryKey: [`/api/public/school/${slug}`],
@@ -34,12 +35,22 @@ export default function SchoolWebsite() {
   const { data: sections = [], isLoading: sectionsLoading } = useQuery<
     PageSection[]
   >({
-    queryKey: [`/api/public/sections/${slug}`],
+    queryKey: [`/api/public/sections/${slug}`, env],
+    queryFn: async () => {
+      const res = await fetch(`/api/public/sections/${slug}?env=${env}`);
+      if (!res.ok) throw new Error("Failed to fetch sections");
+      return res.json();
+    },
     enabled: !!school,
   });
 
   const { data: notices = [], isLoading: noticesLoading } = useQuery<Notice[]>({
-    queryKey: [`/api/public/notices/${slug}`],
+    queryKey: [`/api/public/notices/${slug}`, env],
+    queryFn: async () => {
+      const res = await fetch(`/api/public/notices/${slug}?env=${env}`);
+      if (!res.ok) throw new Error("Failed to fetch notices");
+      return res.json();
+    },
     enabled: !!school,
   });
 
