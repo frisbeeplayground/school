@@ -65,6 +65,12 @@ export default function SchoolWebsite() {
     logo: null,
     primaryColor: "#1e40af",
     secondaryColor: "#3b82f6",
+    tagline: null,
+    description: null,
+    address: null,
+    phone: null,
+    email: null,
+    operatingHours: null,
   };
 
   const displaySchool = school || defaultSchool;
