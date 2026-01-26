@@ -4,12 +4,14 @@ import { EnvironmentToggle } from "./environment-toggle";
 import { Button } from "@/components/ui/button";
 import { Eye, ExternalLink } from "lucide-react";
 import { useCMS } from "@/lib/cms-context";
+import type { ReactNode } from "react";
 
 interface CMSHeaderProps {
   title: string;
+  children?: ReactNode;
 }
 
-export function CMSHeader({ title }: CMSHeaderProps) {
+export function CMSHeader({ title, children }: CMSHeaderProps) {
   const { currentSchool } = useCMS();
 
   return (
@@ -20,6 +22,7 @@ export function CMSHeader({ title }: CMSHeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
+        {children}
         <EnvironmentToggle />
         <Button
           variant="outline"

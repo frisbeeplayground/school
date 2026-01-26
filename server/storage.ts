@@ -14,6 +14,11 @@ import {
   attendance,
   grades,
   progressTokens,
+  websiteThemes,
+  componentCustomizations,
+  themeVersions,
+  aiDesignSuggestions,
+  defaultDesignTokens,
   type User,
   type InsertUser,
   type School,
@@ -44,6 +49,15 @@ import {
   type InsertGrade,
   type ProgressToken,
   type InsertProgressToken,
+  type WebsiteTheme,
+  type InsertWebsiteTheme,
+  type ComponentCustomization,
+  type InsertComponentCustomization,
+  type ThemeVersion,
+  type InsertThemeVersion,
+  type AiDesignSuggestion,
+  type InsertAiDesignSuggestion,
+  type DesignTokens,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, count, sql, gte, lte, like, or } from "drizzle-orm";
@@ -164,6 +178,29 @@ export interface IStorage {
     attendanceRate: number;
     classCount: number;
   }>;
+
+  // Website Themes
+  getThemes(schoolId: string): Promise<WebsiteTheme[]>;
+  getTheme(id: string): Promise<WebsiteTheme | undefined>;
+  getActiveTheme(schoolId: string): Promise<WebsiteTheme | undefined>;
+  createTheme(theme: InsertWebsiteTheme): Promise<WebsiteTheme>;
+  updateTheme(id: string, data: Partial<InsertWebsiteTheme>): Promise<WebsiteTheme | undefined>;
+  deleteTheme(id: string): Promise<boolean>;
+  activateTheme(id: string): Promise<WebsiteTheme | undefined>;
+  createThemeVersion(themeId: string, createdBy?: string): Promise<ThemeVersion>;
+  getThemeVersions(themeId: string): Promise<ThemeVersion[]>;
+  revertToVersion(versionId: string): Promise<WebsiteTheme | undefined>;
+
+  // Component Customizations
+  getComponentCustomizations(themeId: string): Promise<ComponentCustomization[]>;
+  getComponentCustomization(themeId: string, componentType: string): Promise<ComponentCustomization | undefined>;
+  saveComponentCustomization(customization: InsertComponentCustomization): Promise<ComponentCustomization>;
+  deleteComponentCustomization(id: string): Promise<boolean>;
+
+  // AI Design Suggestions
+  getAiSuggestions(schoolId: string): Promise<AiDesignSuggestion[]>;
+  createAiSuggestion(suggestion: InsertAiDesignSuggestion): Promise<AiDesignSuggestion>;
+  updateAiSuggestionStatus(id: string, status: string): Promise<AiDesignSuggestion | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -756,6 +793,192 @@ export class DatabaseStorage implements IStorage {
       attendanceRate,
       classCount: Number(classResult?.count || 0),
     };
+  }
+
+  // ============ WEBSITE THEMES ============
+
+  async getThemes(schoolId: string): Promise<WebsiteTheme[]> {
+    return await db.select().from(websiteThemes)
+      .where(eq(websiteThemes.schoolId, schoolId))
+      .orderBy(desc(websiteThemes.updatedAt));
+  }
+
+  async getTheme(id: string): Promise<WebsiteTheme | undefined> {
+    const [theme] = await db.select().from(websiteThemes)
+      .where(eq(websiteThemes.id, id));
+    return theme || undefined;
+  }
+
+  async getActiveTheme(schoolId: string): Promise<WebsiteTheme | undefined> {
+    const [theme] = await db.select().from(websiteThemes)
+      .where(and(
+        eq(websiteThemes.schoolId, schoolId),
+        eq(websiteThemes.isActive, true)
+      ));
+    
+    // If no active theme, return undefined (will use defaults)
+    return theme || undefined;
+  }
+
+  async createTheme(theme: InsertWebsiteTheme): Promise<WebsiteTheme> {
+    // Set default design tokens if not provided
+    const themeWithDefaults = {
+      ...theme,
+      designTokens: theme.designTokens || defaultDesignTokens,
+    };
+    
+    const [newTheme] = await db.insert(websiteThemes).values(themeWithDefaults).returning();
+    return newTheme;
+  }
+
+  async updateTheme(id: string, data: Partial<InsertWebsiteTheme>): Promise<WebsiteTheme | undefined> {
+    const [updated] = await db.update(websiteThemes)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(websiteThemes.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteTheme(id: string): Promise<boolean> {
+    const result = await db.delete(websiteThemes).where(eq(websiteThemes.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  async activateTheme(id: string): Promise<WebsiteTheme | undefined> {
+    // Get the theme to find schoolId
+    const theme = await this.getTheme(id);
+    if (!theme) return undefined;
+
+    // Deactivate all other themes for this school
+    await db.update(websiteThemes)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(websiteThemes.schoolId, theme.schoolId));
+
+    // Activate the selected theme
+    const [updated] = await db.update(websiteThemes)
+      .set({ isActive: true, updatedAt: new Date() })
+      .where(eq(websiteThemes.id, id))
+      .returning();
+    
+    return updated || undefined;
+  }
+
+  async createThemeVersion(themeId: string, createdBy?: string): Promise<ThemeVersion> {
+    const theme = await this.getTheme(themeId);
+    if (!theme) throw new Error("Theme not found");
+
+    // Get current max version number
+    const [maxVersion] = await db.select({ maxV: sql<number>`COALESCE(MAX(version_number), 0)` })
+      .from(themeVersions)
+      .where(eq(themeVersions.themeId, themeId));
+    
+    const nextVersion = (maxVersion?.maxV || 0) + 1;
+
+    const [version] = await db.insert(themeVersions).values({
+      themeId,
+      versionNumber: nextVersion,
+      configSnapshot: theme.config,
+      designTokensSnapshot: theme.designTokens,
+      createdBy,
+    }).returning();
+
+    // Update theme version number
+    await db.update(websiteThemes)
+      .set({ version: nextVersion, updatedAt: new Date() })
+      .where(eq(websiteThemes.id, themeId));
+
+    return version;
+  }
+
+  async getThemeVersions(themeId: string): Promise<ThemeVersion[]> {
+    return await db.select().from(themeVersions)
+      .where(eq(themeVersions.themeId, themeId))
+      .orderBy(desc(themeVersions.versionNumber));
+  }
+
+  async revertToVersion(versionId: string): Promise<WebsiteTheme | undefined> {
+    const [version] = await db.select().from(themeVersions)
+      .where(eq(themeVersions.id, versionId));
+    
+    if (!version) return undefined;
+
+    // Restore theme from version snapshot
+    const [updated] = await db.update(websiteThemes)
+      .set({
+        config: version.configSnapshot,
+        designTokens: version.designTokensSnapshot,
+        updatedAt: new Date(),
+      })
+      .where(eq(websiteThemes.id, version.themeId))
+      .returning();
+
+    return updated || undefined;
+  }
+
+  // ============ COMPONENT CUSTOMIZATIONS ============
+
+  async getComponentCustomizations(themeId: string): Promise<ComponentCustomization[]> {
+    return await db.select().from(componentCustomizations)
+      .where(eq(componentCustomizations.themeId, themeId));
+  }
+
+  async getComponentCustomization(themeId: string, componentType: string): Promise<ComponentCustomization | undefined> {
+    const [customization] = await db.select().from(componentCustomizations)
+      .where(and(
+        eq(componentCustomizations.themeId, themeId),
+        eq(componentCustomizations.componentType, componentType)
+      ));
+    return customization || undefined;
+  }
+
+  async saveComponentCustomization(customization: InsertComponentCustomization): Promise<ComponentCustomization> {
+    // Upsert: update if exists, insert if not
+    const existing = await this.getComponentCustomization(
+      customization.themeId, 
+      customization.componentType
+    );
+
+    if (existing) {
+      const [updated] = await db.update(componentCustomizations)
+        .set({ ...customization, updatedAt: new Date() })
+        .where(eq(componentCustomizations.id, existing.id))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(componentCustomizations)
+        .values(customization)
+        .returning();
+      return created;
+    }
+  }
+
+  async deleteComponentCustomization(id: string): Promise<boolean> {
+    const result = await db.delete(componentCustomizations)
+      .where(eq(componentCustomizations.id, id));
+    return (result.rowCount ?? 0) > 0;
+  }
+
+  // ============ AI DESIGN SUGGESTIONS ============
+
+  async getAiSuggestions(schoolId: string): Promise<AiDesignSuggestion[]> {
+    return await db.select().from(aiDesignSuggestions)
+      .where(eq(aiDesignSuggestions.schoolId, schoolId))
+      .orderBy(desc(aiDesignSuggestions.createdAt));
+  }
+
+  async createAiSuggestion(suggestion: InsertAiDesignSuggestion): Promise<AiDesignSuggestion> {
+    const [created] = await db.insert(aiDesignSuggestions)
+      .values(suggestion)
+      .returning();
+    return created;
+  }
+
+  async updateAiSuggestionStatus(id: string, status: string): Promise<AiDesignSuggestion | undefined> {
+    const [updated] = await db.update(aiDesignSuggestions)
+      .set({ status })
+      .where(eq(aiDesignSuggestions.id, id))
+      .returning();
+    return updated || undefined;
   }
 }
 

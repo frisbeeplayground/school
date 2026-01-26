@@ -18,6 +18,7 @@ import CMSStudentForm from "@/pages/cms/student-form";
 import CMSAdmissions from "@/pages/cms/admissions";
 import CMSClasses from "@/pages/cms/classes";
 import CMSAttendance from "@/pages/cms/attendance";
+import CMSThemeEditor from "@/pages/cms/theme-editor";
 import SchoolWebsite from "@/pages/website/school-website";
 import ParentPortal from "@/pages/portal/parent-portal";
 
@@ -42,6 +43,7 @@ const CMSStudentFormPage = withCMSLayout(CMSStudentForm);
 const CMSAdmissionsPage = withCMSLayout(CMSAdmissions);
 const CMSClassesPage = withCMSLayout(CMSClasses);
 const CMSAttendancePage = withCMSLayout(CMSAttendance);
+const CMSThemeEditorPage = withCMSLayout(CMSThemeEditor);
 
 function Router() {
   return (
@@ -60,6 +62,7 @@ function Router() {
       <Route path="/cms/admissions" component={CMSAdmissionsPage} />
       <Route path="/cms/classes" component={CMSClassesPage} />
       <Route path="/cms/attendance" component={CMSAttendancePage} />
+      <Route path="/cms/theme-editor" component={CMSThemeEditorPage} />
       <Route path="/site/:slug" component={SchoolWebsite} />
       <Route path="/preview/:slug?" component={SchoolWebsite} />
       <Route path="/portal/:token" component={ParentPortal} />

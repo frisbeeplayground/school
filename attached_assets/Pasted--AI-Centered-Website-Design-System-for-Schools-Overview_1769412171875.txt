@@ -1,0 +1,1537 @@
+# AI-Centered Website Design System for Schools
+
+## Overview
+
+This document outlines the plan for an AI-powered website design system that allows schools to customize the visual appearance (UI/UX) of their websites while maintaining consistent functionality across all school sites. The system is inspired by modern AI website builders like Hostinger's AI Builder, which enable rapid website creation through AI assistance.
+
+## Executive Summary
+
+An AI-powered design system that allows schools to customize their website's visual appearance (colors, fonts, layouts) while keeping all functionality (hero sections, notices, admissions) consistent across all school sites.
+
+**Key Concept: Separation of Concerns**
+- **CMS Portal**: Controls content (text, images, sections, pages, data)
+- **Theme Editor**: Controls visual style (colors, fonts, layouts, spacing, component styles)
+- **Result**: Content + Style = Final Website
+
+## Core Principles
+
+1. **Functional Consistency**: All school websites share the same core features (hero section, notices, admissions, etc.)
+2. **Visual Customization**: Only the UI/UX (colors, fonts, layouts, spacing) is customizable
+3. **Template Structure First**: Engine defines template structure that it understands - this has highest priority
+4. **LLM Constrained by Structure**: LLM generates content that fits into the template structure, not the other way around
+5. **AI-Assisted Design**: AI helps generate and suggest design variations within structure constraints
+6. **Template-Based**: Pre-built templates serve as starting points, all conforming to the structure
+7. **CMS Control**: All content and sections are managed through the CMS portal
+8. **Backend Storage**: Customizations are saved and versioned in the database
+
+## Key Architectural Decision: Template Structure Priority
+
+**CRITICAL**: The template structure that the engine understands has **HIGHEST PRIORITY**.
+
+- ✅ Engine creates template structure first
+- ✅ LLM fills in values within that structure
+- ✅ Structure acts as constraint and validation
+- ✅ Ensures consistency and compatibility
+- ❌ LLM cannot create new structure
+- ❌ LLM cannot modify structure requirements
+- ❌ All output must conform to structure
+
+**Priority Flow**:
+```
+Template Structure (Engine) > LLM Generation > User Instructions
+```
+
+## Architecture Overview
+
+```
+┌───────────────────────────────────────────────────────────── ┐
+│         Template Structure Engine (CORE - HIGHEST PRIORITY)  │
+│ Defines canonical template structure that system understands │
+│  - Design tokens structure                                   │
+│  │  - Component definitions                                  │
+│  - Layout definitions                                        │
+│  - Section structure                                         │
+└───────────────────────────────────────────────────────────── ┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    AI/LLM Layer (CONSTRAINED)               │
+│  LLM generates values that fit into template structure      │
+│  - Receives template structure as constraint                │
+│  - Receives user instructions                               │
+│  - Generates values within structure                        │
+│  - Output validated against structure                       │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│              Customization Engine Layer                     │
+│  (Theme Editor, Color Picker, Typography, Layout Controls)  │
+│  All customizations must conform to template structure      │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│              Theme Storage & Versioning                     │
+│  (Database: website_themes, theme_versions, customizations) │
+│  Stores validated template structures                       │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│              CMS Content Management                         │
+│  (Sections, Notices, Admissions, Pages, Navigation)         │
+│  Content structure also follows template structure          │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
+│              Rendering Engine                               │
+│  (Applies Template Structure + Content → Renders Website)   │
+└─────────────────────────────────────────────────────────────┘
+
+PRIORITY FLOW:
+Template Structure (Engine) → LLM Generation (Constrained) → Validation → Application
+```
+
+## Database Schema Design
+
+### 1. Website Themes Table
+
+```sql
+CREATE TABLE website_themes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  school_id UUID NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  is_active BOOLEAN DEFAULT true,
+  is_default BOOLEAN DEFAULT false,
+  version INTEGER DEFAULT 1,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  
+  -- Theme Configuration (JSONB for flexibility)
+  config JSONB NOT NULL DEFAULT '{}',
+  
+  -- Design Tokens
+  design_tokens JSONB NOT NULL DEFAULT '{}',
+  
+  UNIQUE(school_id, name)
+);
+
+CREATE INDEX idx_website_themes_school ON website_themes(school_id);
+CREATE INDEX idx_website_themes_active ON website_themes(school_id, is_active);
+```
+
+### 2. Design Tokens Structure
+
+```json
+{
+  "colors": {
+    "primary": "#3B82F6",
+    "secondary": "#8B5CF6",
+    "accent": "#F59E0B",
+    "background": "#FFFFFF",
+    "surface": "#F9FAFB",
+    "text": {
+      "primary": "#111827",
+      "secondary": "#6B7280",
+      "muted": "#9CA3AF"
+    },
+    "border": "#E5E7EB",
+    "error": "#EF4444",
+    "success": "#10B981",
+    "warning": "#F59E0B",
+    "info": "#3B82F6"
+  },
+  "typography": {
+    "fontFamily": {
+      "heading": "Inter, sans-serif",
+      "body": "Inter, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "fontSize": {
+      "xs": "0.75rem",
+      "sm": "0.875rem",
+      "base": "1rem",
+      "lg": "1.125rem",
+      "xl": "1.25rem",
+      "2xl": "1.5rem",
+      "3xl": "1.875rem",
+      "4xl": "2.25rem",
+      "5xl": "3rem"
+    },
+    "fontWeight": {
+      "light": 300,
+      "normal": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "lineHeight": {
+      "tight": 1.25,
+      "normal": 1.5,
+      "relaxed": 1.75
+    }
+  },
+  "spacing": {
+    "scale": "1.25", // Multiplier for spacing scale
+    "unit": "0.25rem" // Base unit (4px)
+  },
+  "borderRadius": {
+    "none": "0",
+    "sm": "0.125rem",
+    "base": "0.25rem",
+    "md": "0.375rem",
+    "lg": "0.5rem",
+    "xl": "0.75rem",
+    "full": "9999px"
+  },
+  "shadows": {
+    "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+    "base": "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
+    "md": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+    "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+    "xl": "0 20px 25px -5px rgba(0, 0, 0, 0.1)"
+  },
+  "breakpoints": {
+    "sm": "640px",
+    "md": "768px",
+    "lg": "1024px",
+    "xl": "1280px",
+    "2xl": "1536px"
+  }
+}
+```
+
+### 3. Component Customizations Table
+
+```sql
+CREATE TABLE component_customizations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  theme_id UUID NOT NULL REFERENCES website_themes(id) ON DELETE CASCADE,
+  component_type VARCHAR(100) NOT NULL, -- 'hero', 'notice', 'admission', etc.
+  component_id UUID, -- Optional: specific component instance
+  
+  -- Customization overrides (JSONB)
+  styles JSONB DEFAULT '{}',
+  layout JSONB DEFAULT '{}',
+  variants JSONB DEFAULT '{}',
+  
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  
+  UNIQUE(theme_id, component_type, component_id)
+);
+
+CREATE INDEX idx_component_customizations_theme ON component_customizations(theme_id);
+CREATE INDEX idx_component_customizations_type ON component_customizations(component_type);
+```
+
+### 4. Theme Versions Table
+
+```sql
+CREATE TABLE theme_versions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  theme_id UUID NOT NULL REFERENCES website_themes(id) ON DELETE CASCADE,
+  version_number INTEGER NOT NULL,
+  config_snapshot JSONB NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  created_by UUID REFERENCES users(id),
+  
+  UNIQUE(theme_id, version_number)
+);
+
+CREATE INDEX idx_theme_versions_theme ON theme_versions(theme_id);
+```
+
+### 5. AI Design Suggestions Table
+
+```sql
+CREATE TABLE ai_design_suggestions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  school_id UUID NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
+  suggestion_type VARCHAR(50) NOT NULL, -- 'color_palette', 'layout', 'typography', etc.
+  prompt TEXT,
+  generated_config JSONB NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'accepted', 'rejected'
+  created_at TIMESTAMP DEFAULT NOW(),
+  
+  FOREIGN KEY (school_id) REFERENCES schools(id)
+);
+
+CREATE INDEX idx_ai_suggestions_school ON ai_design_suggestions(school_id);
+CREATE INDEX idx_ai_suggestions_status ON ai_design_suggestions(status);
+```
+
+## AI Design System Features
+
+### 1. Template Structure Engine (Core System)
+
+**Purpose**: The engine defines a structured template format that it understands and enforces. This template structure acts as the foundation and constraint for all AI generation.
+
+**Key Principle**: **Template Structure > LLM Generation**
+- The engine creates and maintains the template structure
+- LLM generates content that fits into this structure
+- Template structure has higher priority - LLM must conform to it
+- This ensures consistency, compatibility, and predictable output
+
+**Template Structure Schema**:
+```typescript
+/**
+ * Core template structure that the engine understands
+ * This is the canonical format that all AI generation must conform to
+ */
+interface TemplateStructure {
+  // Metadata
+  version: string; // Template structure version
+  templateId: string;
+  templateName: string;
+  
+  // Design Tokens (Structured format)
+  designTokens: {
+    colors: {
+      primary: ColorDefinition;
+      secondary: ColorDefinition;
+      accent: ColorDefinition;
+      background: ColorDefinition;
+      surface: ColorDefinition;
+      text: {
+        primary: ColorDefinition;
+        secondary: ColorDefinition;
+        muted: ColorDefinition;
+      };
+      border: ColorDefinition;
+      status: {
+        error: ColorDefinition;
+        success: ColorDefinition;
+        warning: ColorDefinition;
+        info: ColorDefinition;
+      };
+    };
+    typography: {
+      fontFamilies: {
+        heading: FontFamilyDefinition;
+        body: FontFamilyDefinition;
+        mono: FontFamilyDefinition;
+      };
+      scales: {
+        xs: TypographyScale;
+        sm: TypographyScale;
+        base: TypographyScale;
+        lg: TypographyScale;
+        xl: TypographyScale;
+        '2xl': TypographyScale;
+        '3xl': TypographyScale;
+        '4xl': TypographyScale;
+        '5xl': TypographyScale;
+      };
+    };
+    spacing: SpacingScale;
+    borderRadius: BorderRadiusScale;
+    shadows: ShadowScale;
+    breakpoints: BreakpointScale;
+  };
+  
+  // Component Definitions (Structured)
+  components: {
+    hero: ComponentDefinition;
+    notice: ComponentDefinition;
+    admission: ComponentDefinition;
+    about: ComponentDefinition;
+    features: ComponentDefinition;
+    testimonials: ComponentDefinition;
+    contact: ComponentDefinition;
+    footer: ComponentDefinition;
+  };
+  
+  // Layout Definitions
+  layouts: {
+    hero: LayoutDefinition;
+    content: LayoutDefinition;
+    sidebar: LayoutDefinition;
+    grid: LayoutDefinition;
+  };
+  
+  // Section Structure (What sections exist, their order, required fields)
+  sections: SectionDefinition[];
+}
+
+interface ColorDefinition {
+  value: string; // Hex, RGB, or CSS color name
+  description?: string; // What this color represents
+  usage: string[]; // Where this color is used
+  accessibility: {
+    contrastRatio: number;
+    wcagLevel: 'AA' | 'AAA';
+  };
+}
+
+interface ComponentDefinition {
+  type: string; // 'hero', 'notice', etc.
+  required: boolean;
+  variants: ComponentVariant[];
+  defaultVariant: string;
+  customizable: {
+    colors: string[]; // Which design tokens can be customized
+    typography: string[];
+    spacing: string[];
+    layout: string[];
+  };
+  constraints: {
+    minHeight?: number;
+    maxHeight?: number;
+    requiredFields: string[];
+    optionalFields: string[];
+  };
+}
+
+interface ComponentVariant {
+  id: string;
+  name: string;
+  description: string;
+  styles: Record<string, any>;
+  layout: LayoutDefinition;
+}
+
+interface SectionDefinition {
+  id: string;
+  type: string;
+  name: string;
+  required: boolean;
+  order: number;
+  componentType: string;
+  defaultVariant: string;
+}
+```
+
+### 2. AI Template Generator (LLM Integration)
+
+**Purpose**: Generate school-specific website templates using LLM, but constrained by the template structure
+
+**Process**:
+1. **Engine creates base template structure** (empty/neutral template)
+2. User provides school information and instructions
+3. **Engine validates template structure** is complete
+4. **LLM is called with**:
+   - The template structure (as constraint)
+   - User instructions
+   - System prompt explaining the structure
+5. **LLM generates values** that fit into the template structure
+6. **Engine validates** LLM output against template structure
+7. **Engine applies** validated values to template
+8. Template is saved and ready to use
+
+**Implementation**:
+```typescript
+/**
+ * Template generation request
+ */
+interface AITemplateRequest {
+  schoolName: string;
+  schoolType: 'primary' | 'secondary' | 'college' | 'university';
+  brandColors?: string[]; // Optional existing brand colors
+  values: string[]; // e.g., ['excellence', 'innovation', 'community']
+  targetAudience: 'students' | 'parents' | 'both';
+  stylePreference?: 'modern' | 'traditional' | 'playful' | 'professional';
+  userInstructions?: string; // Free-form instructions from user
+}
+
+/**
+ * Template generation response (must conform to TemplateStructure)
+ */
+interface AITemplateResponse {
+  templateStructure: TemplateStructure; // Complete structure with LLM-generated values
+  generationMetadata: {
+    prompt: string;
+    model: string;
+    timestamp: Date;
+    confidence: number; // How well it fits the structure
+  };
+}
+
+/**
+ * Core template generation function
+ */
+class TemplateEngine {
+  /**
+   * Creates a base template structure that the engine understands
+   * This is the foundation - always starts here
+   */
+  createBaseTemplateStructure(): TemplateStructure {
+    return {
+      version: '1.0.0',
+      templateId: generateId(),
+      templateName: 'Base Template',
+      designTokens: this.getDefaultDesignTokens(),
+      components: this.getDefaultComponents(),
+      layouts: this.getDefaultLayouts(),
+      sections: this.getDefaultSections(),
+    };
+  }
+  
+  /**
+   * Generates template using LLM, constrained by template structure
+   */
+  async generateTemplateWithLLM(
+    request: AITemplateRequest,
+    baseStructure: TemplateStructure
+  ): Promise<AITemplateResponse> {
+    // 1. Prepare system prompt with template structure
+    const systemPrompt = this.buildSystemPrompt(baseStructure);
+    
+    // 2. Prepare user prompt with instructions
+    const userPrompt = this.buildUserPrompt(request);
+    
+    // 3. Call LLM with structure as constraint
+    const llmResponse = await this.callLLM({
+      systemPrompt,
+      userPrompt,
+      structure: baseStructure, // Template structure has priority
+    });
+    
+    // 4. Parse and validate LLM response against structure
+    const validatedStructure = this.validateAndMerge(
+      baseStructure,
+      llmResponse
+    );
+    
+    // 5. Return validated template structure
+    return {
+      templateStructure: validatedStructure,
+      generationMetadata: {
+        prompt: userPrompt,
+        model: 'gpt-4',
+        timestamp: new Date(),
+        confidence: this.calculateConfidence(validatedStructure),
+      },
+    };
+  }
+  
+  /**
+   * System prompt that enforces template structure
+   */
+  private buildSystemPrompt(structure: TemplateStructure): string {
+    return `
+You are a website design assistant for school websites. You must generate design configurations that conform EXACTLY to the provided template structure.
+
+TEMPLATE STRUCTURE (MUST FOLLOW):
+${JSON.stringify(structure, null, 2)}
+
+RULES:
+1. You MUST fill in values for all required fields in the template structure
+2. You CANNOT add new fields that don't exist in the structure
+3. You CANNOT remove required fields
+4. All color values must be valid CSS colors (hex, rgb, or named colors)
+5. All typography values must reference valid Google Fonts or system fonts
+6. All component variants must match the defined component structure
+7. Your output MUST be valid JSON that matches the TemplateStructure interface
+
+PRIORITY: Template Structure > Your Creative Suggestions
+If there's a conflict, the template structure wins.
+`;
+  }
+  
+  /**
+   * User prompt with instructions
+   */
+  private buildUserPrompt(request: AITemplateRequest): string {
+    return `
+Generate a website design template for:
+- School Name: ${request.schoolName}
+- School Type: ${request.schoolType}
+- Brand Values: ${request.values.join(', ')}
+- Target Audience: ${request.targetAudience}
+- Style Preference: ${request.stylePreference || 'professional'}
+${request.brandColors ? `- Existing Brand Colors: ${request.brandColors.join(', ')}` : ''}
+${request.userInstructions ? `- Additional Instructions: ${request.userInstructions}` : ''}
+
+Fill in the template structure with appropriate values that match the school's identity and requirements.
+Ensure all colors are accessible (WCAG AA minimum) and all typography is readable.
+`;
+  }
+  
+  /**
+   * Validates and merges LLM response with base structure
+   */
+  private validateAndMerge(
+    baseStructure: TemplateStructure,
+    llmResponse: any
+  ): TemplateStructure {
+    // Deep merge, but enforce structure constraints
+    const merged = deepMerge(baseStructure, llmResponse);
+    
+    // Validate against schema
+    const validation = this.validateStructure(merged);
+    if (!validation.valid) {
+      // If invalid, fall back to base structure with minimal LLM values
+      return this.safeMerge(baseStructure, llmResponse, validation.errors);
+    }
+    
+    return merged;
+  }
+  
+  /**
+   * Validates structure conforms to schema
+   */
+  private validateStructure(
+    structure: TemplateStructure
+  ): { valid: boolean; errors: string[] } {
+    const errors: string[] = [];
+    
+    // Validate design tokens exist
+    if (!structure.designTokens?.colors?.primary) {
+      errors.push('Missing required design token: colors.primary');
+    }
+    
+    // Validate components exist
+    if (!structure.components?.hero) {
+      errors.push('Missing required component: hero');
+    }
+    
+    // Validate sections exist
+    if (!structure.sections || structure.sections.length === 0) {
+      errors.push('Missing required sections');
+    }
+    
+    // More validation...
+    
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
+  }
+}
+```
+
+### 3. AI Color Palette Generator (Structure-Constrained)
+
+**Purpose**: Generate harmonious color palettes that fit into the template structure's color system
+
+**Process**:
+1. Engine provides color structure from template (primary, secondary, accent, etc.)
+2. User gives instructions ("make it more professional", "add school colors")
+3. LLM generates color values that fit the structure
+4. Engine validates colors against structure and accessibility
+5. Colors are applied to template structure
+
+**Implementation**:
+```typescript
+/**
+ * Generate colors constrained by template structure
+ */
+async generateColors(
+  templateStructure: TemplateStructure,
+  instructions: string
+): Promise<TemplateStructure> {
+  // Extract color structure from template
+  const colorStructure = templateStructure.designTokens.colors;
+  
+  // Build prompt with structure constraint
+  const prompt = `
+You must generate colors that fit into this EXACT structure:
+${JSON.stringify(colorStructure, null, 2)}
+
+User Instructions: ${instructions}
+
+Generate color values (hex codes) for each color in the structure.
+Ensure:
+- All colors are accessible (WCAG AA minimum)
+- Colors work harmoniously together
+- Primary color matches school identity
+- Output must match the exact structure provided
+`;
+  
+  const llmResponse = await this.callLLM(prompt);
+  
+  // Validate and merge
+  return this.validateAndMergeColors(templateStructure, llmResponse);
+}
+```
+
+### 4. AI Layout Suggestions (Structure-Constrained)
+
+**Purpose**: Suggest optimal layouts that fit into the template structure's layout system
+
+**Process**:
+1. Engine provides layout structure from template
+2. User provides content or instructions
+3. LLM suggests layout configurations within structure constraints
+4. Engine validates and applies
+
+**Implementation**:
+```typescript
+/**
+ * Generate layout suggestions constrained by template structure
+ */
+async suggestLayouts(
+  templateStructure: TemplateStructure,
+  componentType: string,
+  content: any,
+  instructions: string
+): Promise<LayoutSuggestion[]> {
+  // Get layout structure for component
+  const layoutStructure = templateStructure.layouts[componentType];
+  const componentStructure = templateStructure.components[componentType];
+  
+  const prompt = `
+Generate layout suggestions for ${componentType} component.
+
+LAYOUT STRUCTURE (MUST FOLLOW):
+${JSON.stringify(layoutStructure, null, 2)}
+
+COMPONENT STRUCTURE (MUST FOLLOW):
+${JSON.stringify(componentStructure, null, 2)}
+
+Content: ${JSON.stringify(content)}
+Instructions: ${instructions}
+
+Generate 3 layout variations that:
+1. Fit the exact structure provided
+2. Optimize for the given content
+3. Are mobile-responsive
+4. Follow accessibility guidelines
+
+Output must be valid JSON matching the LayoutDefinition interface.
+`;
+  
+  const suggestions = await this.callLLM(prompt);
+  return this.validateLayoutSuggestions(suggestions, layoutStructure);
+}
+```
+
+### 5. AI Content Enhancement (Structure-Aware)
+
+**Purpose**: Help improve website content while maintaining school voice and template structure
+
+**Features**:
+- Suggest improvements to section descriptions
+- Generate meta descriptions for SEO
+- Suggest call-to-action text
+- Maintain school's unique voice
+- **Respects template structure constraints** (e.g., max character limits, required fields)
+
+**Implementation**:
+```typescript
+/**
+ * Enhance content while respecting template structure
+ */
+async enhanceContent(
+  templateStructure: TemplateStructure,
+  sectionId: string,
+  currentContent: any,
+  instructions: string
+): Promise<any> {
+  // Get section structure
+  const section = templateStructure.sections.find(s => s.id === sectionId);
+  const component = templateStructure.components[section.componentType];
+  
+  const prompt = `
+Enhance content for section: ${section.name}
+
+CONTENT CONSTRAINTS (MUST FOLLOW):
+- Required fields: ${component.constraints.requiredFields.join(', ')}
+- Optional fields: ${component.constraints.optionalFields.join(', ')}
+- Max length constraints: ${JSON.stringify(component.constraints)}
+
+Current Content: ${JSON.stringify(currentContent)}
+Instructions: ${instructions}
+
+Generate enhanced content that:
+1. Fits the exact structure and constraints
+2. Maintains the school's voice
+3. Improves clarity and engagement
+4. Respects all field requirements and limits
+
+Output must match the content structure exactly.
+`;
+  
+  return await this.callLLM(prompt);
+}
+```
+
+## Customization Interface Design
+
+### 1. Theme Editor Dashboard
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Theme Editor - [School Name]                               │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │   Colors     │  │ Typography   │  │   Layout     │    │
+│  │   🎨         │  │   Aa         │  │   📐         │    │
+│  └──────────────┘  └──────────────┘  └──────────────┘    │
+│                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │ Components   │  │   Spacing    │  │   AI Help    │    │
+│  │   🧩         │  │   ↔️         │  │   ✨         │    │
+│  └──────────────┘  └──────────────┘  └──────────────┘    │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │              Live Preview                            │  │
+│  │  [Real-time preview of changes]                     │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                              │
+│  [Cancel]  [Save Draft]  [Publish Changes]                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 2. Color Customization Panel
+
+**Features**:
+- Color picker for each design token
+- Palette generator with AI suggestions
+- Color accessibility checker
+- Preview of color combinations
+- Import from school logo/image
+
+**UI Components**:
+- Primary color picker
+- Secondary color picker
+- Accent color picker
+- Background colors
+- Text colors
+- Status colors (error, success, warning, info)
+
+### 3. Typography Customization Panel
+
+**Features**:
+- Font family selector (Google Fonts integration)
+- Font size controls
+- Font weight controls
+- Line height adjustments
+- Letter spacing
+- Preview text samples
+
+### 4. Component-Specific Customization
+
+**For Each Component Type**:
+
+#### Hero Section
+- Background image/video settings
+- Text color
+- Button styles
+- Overlay opacity
+- Content alignment
+- Height/spacing
+
+#### Notices Section
+- Card style (elevated, outlined, filled)
+- Border radius
+- Hover effects
+- Typography
+- Spacing between items
+
+#### Admissions Section
+- Form styling
+- Input field styles
+- Button styles
+- Success/error states
+- Layout (single column, two column)
+
+#### Navigation Menu
+- Menu style (horizontal, vertical, hamburger)
+- Link colors
+- Hover effects
+- Active state styling
+- Mobile menu style
+
+## AI Integration Points
+
+### 1. AI Design Assistant
+
+**Capabilities**:
+- "Generate a modern color palette"
+- "Suggest a layout for the hero section"
+- "Make the design more professional"
+- "Optimize for mobile viewing"
+- "Create a playful theme for primary school"
+
+**Implementation**:
+```typescript
+interface AIDesignAssistant {
+  generateColorPalette(prompt: string): Promise<ColorPalette>;
+  suggestLayout(componentType: string, content: any): Promise<LayoutSuggestion[]>;
+  optimizeDesign(theme: Theme, goal: string): Promise<Theme>;
+  generateVariations(baseTheme: Theme, count: number): Promise<Theme[]>;
+}
+```
+
+### 2. AI Content Suggestions
+
+**For Each Section**:
+- Hero: Suggest compelling headlines and CTAs
+- Notices: Suggest notice formatting
+- Admissions: Suggest form field labels and help text
+- About: Suggest content structure
+
+### 3. AI Accessibility Checker
+
+**Features**:
+- Check color contrast ratios
+- Verify font sizes meet accessibility standards
+- Check touch target sizes
+- Validate keyboard navigation
+- Generate accessibility report
+
+## Template System
+
+### Pre-built Templates
+
+1. **Modern Academic** - Clean, professional, suitable for universities
+2. **Playful Primary** - Colorful, friendly, for primary schools
+3. **Traditional Excellence** - Classic, prestigious, for established schools
+4. **Innovation Hub** - Tech-forward, modern, for STEM-focused schools
+5. **Community Focus** - Warm, welcoming, for community schools
+
+### Template Structure
+
+Each template includes:
+- Complete design token configuration
+- Component style definitions
+- Layout presets
+- Example content structure
+- Responsive breakpoints
+
+## CMS Integration
+
+### Section Management
+
+The CMS portal controls:
+- **Content**: All text, images, and media
+- **Sections**: Which sections appear and their order
+- **Pages**: Page structure and navigation
+- **Data**: Notices, admissions, events, etc.
+
+The Theme Editor controls:
+- **Visual Style**: Colors, fonts, spacing
+- **Layout**: Component arrangements
+- **Animations**: Transitions and effects
+
+### Separation of Concerns
+
+```
+Content (CMS)          +         Style (Theme Editor)        =         Website
+─────────────────              ───────────────────              ──────────────
+- Hero title                      - Hero colors                    - Styled Hero
+- Hero subtitle                   - Hero typography                Section
+- Notice text                    - Notice card style              - Styled Notice
+- Admission form fields           - Form input styles             - Styled Form
+```
+
+## Backend API Design
+
+### Theme Management Endpoints
+
+```typescript
+// Get active theme for school
+GET /api/schools/:schoolId/theme
+
+// Create new theme
+POST /api/schools/:schoolId/themes
+
+// Update theme
+PATCH /api/themes/:themeId
+
+// Apply theme (activate)
+POST /api/themes/:themeId/activate
+
+// Get theme versions
+GET /api/themes/:themeId/versions
+
+// Revert to version
+POST /api/themes/:themeId/versions/:versionId/restore
+
+// Duplicate theme
+POST /api/themes/:themeId/duplicate
+```
+
+### AI Design Endpoints
+
+```typescript
+// Generate color palette
+POST /api/ai/design/color-palette
+Body: { prompt: string, schoolId: string }
+
+// Suggest layout
+POST /api/ai/design/layout
+Body: { componentType: string, content: any }
+
+// Generate template
+POST /api/ai/design/template
+Body: { schoolInfo: AITemplateRequest }
+
+// Optimize design
+POST /api/ai/design/optimize
+Body: { themeId: string, goal: string }
+
+// Get AI suggestions
+GET /api/schools/:schoolId/ai-suggestions
+```
+
+### Component Customization Endpoints
+
+```typescript
+// Get component customization
+GET /api/themes/:themeId/components/:componentType
+
+// Update component customization
+PATCH /api/themes/:themeId/components/:componentType
+
+// Reset component to default
+DELETE /api/themes/:themeId/components/:componentType
+```
+
+## Frontend Implementation
+
+### Theme Editor Application
+
+**Location**: `/cms/design/theme-editor`
+
+**Components**:
+1. `ThemeEditor` - Main container
+2. `ColorPanel` - Color customization
+3. `TypographyPanel` - Typography controls
+4. `ComponentCustomizer` - Component-specific styling
+5. `LivePreview` - Real-time preview
+6. `AIAssistant` - AI design suggestions
+7. `ThemeVersions` - Version history
+
+### Theme Application System
+
+**CSS-in-JS or CSS Variables**:
+- Generate CSS variables from design tokens
+- Apply at runtime based on active theme
+- Support theme switching without page reload
+
+**Implementation**:
+```typescript
+// Generate CSS variables from theme
+function generateThemeCSS(theme: Theme): string {
+  const tokens = theme.design_tokens;
+  return `
+    :root {
+      --color-primary: ${tokens.colors.primary};
+      --color-secondary: ${tokens.colors.secondary};
+      --font-heading: ${tokens.typography.fontFamily.heading};
+      --font-body: ${tokens.typography.fontFamily.body};
+      /* ... more variables ... */
+    }
+  `;
+}
+```
+
+## Workflow
+
+### 1. Initial Setup
+
+1. School admin accesses Theme Editor
+2. Chooses to start from template or AI generation
+3. If AI: Provides school information, AI generates theme
+4. If template: Selects pre-built template
+5. Theme is saved as draft
+
+### 2. Customization
+
+1. Admin customizes colors, typography, components
+2. Live preview updates in real-time
+3. Changes saved as draft automatically
+4. AI suggestions available at any time
+
+### 3. Publishing
+
+1. Admin reviews changes in preview
+2. Clicks "Publish Changes"
+3. System creates version snapshot
+4. Theme is activated
+5. Website updates immediately
+
+### 4. Version Management
+
+1. All changes create versions
+2. Admin can view version history
+3. Can revert to any previous version
+4. Can compare versions side-by-side
+
+## AI Model Integration
+
+### Recommended AI Services
+
+1. **OpenAI GPT-4** - For content generation and suggestions (with structure constraints)
+2. **Claude (Anthropic)** - For design analysis and recommendations (with structure constraints)
+3. **Stable Diffusion** - For image generation (if needed)
+4. **Custom Models** - For color palette generation, accessibility checking
+
+### Core Principle: Template Structure First
+
+**All LLM calls follow this pattern**:
+
+1. **Engine provides template structure** (the constraint)
+2. **System prompt explains structure** (must follow exactly)
+3. **User prompt provides instructions** (what to generate)
+4. **LLM generates within structure** (fills in values)
+5. **Engine validates output** (ensures structure compliance)
+6. **Engine applies validated values** (merges into template)
+
+### Prompt Engineering Pattern
+
+**Standard System Prompt Template**:
+```
+You are a design assistant for school websites. You MUST generate configurations that conform EXACTLY to the provided template structure.
+
+TEMPLATE STRUCTURE (MUST FOLLOW - HIGHEST PRIORITY):
+[Template Structure JSON]
+
+RULES:
+1. Template structure has HIGHEST PRIORITY
+2. You MUST fill in all required fields
+3. You CANNOT add fields not in the structure
+4. You CANNOT remove required fields
+5. All values must be valid and match the structure's type definitions
+6. Output MUST be valid JSON matching the structure exactly
+
+PRIORITY ORDER:
+1. Template Structure (MUST follow)
+2. User Instructions (Fill within structure)
+3. Your Creative Suggestions (Only if structure allows)
+```
+
+**Color Palette Generation (Structure-Constrained)**:
+```
+SYSTEM PROMPT:
+[Standard system prompt with color structure]
+
+USER PROMPT:
+Generate colors for a [school type] website.
+School values: [values]
+User instructions: [instructions]
+
+The color structure requires:
+- primary: [description from structure]
+- secondary: [description from structure]
+- accent: [description from structure]
+- [all other colors from structure]
+
+Generate hex codes that:
+1. Fit the exact structure provided
+2. Match the school's identity
+3. Meet WCAG AA accessibility standards
+4. Work harmoniously together
+```
+
+**Layout Suggestions (Structure-Constrained)**:
+```
+SYSTEM PROMPT:
+[Standard system prompt with layout structure]
+
+USER PROMPT:
+Suggest layouts for [component type] section.
+Content: [content description]
+User instructions: [instructions]
+
+The layout structure requires:
+- [layout fields from structure]
+- [component constraints from structure]
+
+Generate layout configurations that:
+1. Fit the exact structure provided
+2. Optimize for the given content
+3. Are mobile-responsive
+4. Follow accessibility guidelines
+```
+
+### LLM Call Wrapper
+
+```typescript
+/**
+ * Wrapper for all LLM calls that enforces template structure
+ */
+class StructuredLLMCaller {
+  async callWithStructure<T>(
+    structure: TemplateStructure,
+    userInstructions: string,
+    generationType: 'colors' | 'layout' | 'content' | 'full-template'
+  ): Promise<T> {
+    // 1. Build system prompt with structure
+    const systemPrompt = this.buildSystemPrompt(structure, generationType);
+    
+    // 2. Build user prompt with instructions
+    const userPrompt = this.buildUserPrompt(userInstructions, generationType);
+    
+    // 3. Call LLM
+    const response = await this.llmService.call({
+      systemPrompt,
+      userPrompt,
+      temperature: 0.7, // Balance creativity with structure compliance
+      maxTokens: 4000,
+    });
+    
+    // 4. Parse response
+    const parsed = this.parseResponse(response);
+    
+    // 5. Validate against structure
+    const validated = this.validateAgainstStructure(parsed, structure);
+    
+    // 6. Return validated result
+    return validated as T;
+  }
+  
+  private buildSystemPrompt(
+    structure: TemplateStructure,
+    type: string
+  ): string {
+    return `
+You are a design assistant. You MUST generate configurations that conform EXACTLY to the template structure.
+
+TEMPLATE STRUCTURE (HIGHEST PRIORITY - MUST FOLLOW):
+${JSON.stringify(this.getRelevantStructure(structure, type), null, 2)}
+
+RULES:
+1. Template structure has HIGHEST PRIORITY
+2. Fill in all required fields
+3. Cannot add fields not in structure
+4. Cannot remove required fields
+5. Output must be valid JSON matching structure exactly
+
+PRIORITY: Template Structure > User Instructions > Creative Suggestions
+`;
+  }
+}
+```
+
+## Security & Performance
+
+### Security
+
+1. **Theme Validation**: Validate all theme configurations before saving
+2. **XSS Prevention**: Sanitize any user-generated CSS/HTML
+3. **Access Control**: Only authorized users can modify themes
+4. **Version Control**: Prevent accidental overwrites
+
+### Performance
+
+1. **CSS Optimization**: Minify generated CSS
+2. **Caching**: Cache compiled themes
+3. **Lazy Loading**: Load theme assets on demand
+4. **CDN**: Serve theme assets via CDN
+
+## Migration Strategy
+
+### Existing Schools
+
+1. Create default theme based on current design
+2. Extract existing styles into design tokens
+3. Migrate to new theme system
+4. Allow gradual customization
+
+### New Schools
+
+1. Start with template selection
+2. Use AI to generate initial theme
+3. Customize as needed
+4. Publish when ready
+
+## Success Metrics
+
+1. **Time to Launch**: Reduce website setup time by 70%
+2. **Customization Rate**: 80% of schools customize their theme
+3. **AI Adoption**: 60% use AI suggestions
+4. **User Satisfaction**: 4.5+ star rating
+5. **Performance**: All themes load in <2 seconds
+
+## Future Enhancements
+
+1. **AI Image Generation**: Generate school-specific images
+2. **Voice Commands**: "Make the header blue"
+3. **A/B Testing**: Test different theme variations
+4. **Analytics Integration**: Track which designs perform best
+5. **Multi-language Themes**: Support for RTL languages
+6. **Dark Mode**: Automatic dark mode generation
+7. **Accessibility Modes**: High contrast, large text modes
+
+## Implementation Phases
+
+### Phase 1: Foundation - Template Structure Engine (Weeks 1-4)
+**CRITICAL**: Build the template structure engine first
+
+- **Week 1-2**: Define and implement template structure schema
+  - Create TypeScript interfaces for TemplateStructure
+  - Implement structure validation system
+  - Create base template structure generator
+  - Build structure serialization/deserialization
+  
+- **Week 3**: Database schema implementation
+  - Store template structures (not just values)
+  - Structure versioning
+  - Component definitions storage
+  
+- **Week 4**: Basic structure editor UI
+  - Display template structure
+  - Edit values within structure constraints
+  - Structure validation feedback
+  - Simple theme editor UI
+
+### Phase 2: LLM Integration - Structure-Constrained (Weeks 5-8)
+**CRITICAL**: LLM must work within structure constraints
+
+- **Week 5-6**: LLM wrapper with structure enforcement
+  - Build StructuredLLMCaller class
+  - System prompt generation with structure
+  - Response validation against structure
+  - Error handling and fallbacks
+  
+- **Week 7**: AI template generation
+  - Generate templates using LLM
+  - Structure-first approach
+  - Validation and merging
+  
+- **Week 8**: AI color and layout suggestions
+  - Color generation within structure
+  - Layout suggestions within structure
+  - User instruction processing
+
+### Phase 3: Customization (Weeks 9-12)
+- Color customization (structure-constrained)
+- Typography controls (structure-constrained)
+- Component-specific styling (structure-constrained)
+- Live preview (using structure)
+
+### Phase 4: Advanced Features (Weeks 13-16)
+- Version management (structure versions)
+- Theme comparison (structure comparison)
+- Accessibility checker (structure-aware)
+- Performance optimization
+- Template marketplace (all conforming to structure)
+
+### Phase 5: Polish & Launch (Weeks 17-20)
+- Additional templates (all structure-compliant)
+- Documentation (structure-first approach)
+- User training
+- Beta testing with select schools
+
+## Template Structure First Approach - Detailed Explanation
+
+### How It Works
+
+#### 1. Engine Creates Template Structure
+
+The engine defines a canonical template structure that it fully understands. This structure is:
+- ✅ Defined by the engine (not LLM)
+- ✅ Fixed and validated
+- ✅ The source of truth
+- ✅ Cannot be modified by LLM
+- ✅ Acts as constraint for all generation
+
+#### 2. LLM Called with Structure + Instructions
+
+When generating templates or customizations:
+
+```typescript
+// 1. Engine creates/loads template structure
+const structure = engine.createBaseTemplateStructure();
+
+// 2. User provides instructions
+const userInstructions = "Make it more professional for a university";
+
+// 3. LLM called with structure as constraint
+const result = await llm.generate({
+  systemPrompt: `
+    You MUST generate values that fit this EXACT structure:
+    ${JSON.stringify(structure)}
+    
+    RULES:
+    - Template structure has HIGHEST PRIORITY
+    - Fill in values within the structure
+    - Cannot add/remove fields
+    - Output must match structure exactly
+  `,
+  userPrompt: userInstructions
+});
+
+// 4. Engine validates against structure
+const validated = engine.validateAgainstStructure(result, structure);
+
+// 5. Engine applies validated values
+const finalTemplate = engine.merge(structure, validated);
+```
+
+#### 3. Structure Validation
+
+All LLM output is validated against the structure to ensure:
+- All required fields exist
+- No extra fields added
+- Types match structure definitions
+- Constraints are met
+
+### Example Flow: Generate Template for "Sunshine Primary School"
+
+1. **Engine creates structure**:
+```json
+{
+  "designTokens": {
+    "colors": {
+      "primary": null,  // LLM will fill
+      "secondary": null,
+      "accent": null,
+      ...
+    }
+  },
+  "components": {
+    "hero": { ... },
+    "notice": { ... }
+  }
+}
+```
+
+2. **User provides instructions**:
+```
+"Create a playful, colorful theme for a primary school.
+Use warm colors that appeal to children and parents."
+```
+
+3. **LLM receives**:
+```
+SYSTEM: You must fill in this structure:
+{
+  "designTokens": {
+    "colors": {
+      "primary": <fill hex code>,
+      "secondary": <fill hex code>,
+      ...
+    }
+  }
+}
+
+USER: Create a playful, colorful theme for a primary school...
+```
+
+4. **LLM generates**:
+```json
+{
+  "designTokens": {
+    "colors": {
+      "primary": "#FF6B35",  // Warm orange
+      "secondary": "#4ECDC4", // Playful teal
+      "accent": "#FFE66D",    // Bright yellow
+      ...
+    }
+  }
+}
+```
+
+5. **Engine validates**:
+- ✅ All required colors present
+- ✅ Valid hex codes
+- ✅ Meets accessibility standards
+- ✅ No extra fields
+
+6. **Engine applies**:
+- Merges LLM values into structure
+- Creates final template
+- Saves to database
+
+### Key Differences from Traditional AI Generation
+
+**Traditional Approach (❌ Not Used)**:
+```
+User Instructions → LLM → Free-form Output → Try to fit into system
+```
+- LLM creates structure
+- Output format unpredictable
+- Hard to validate
+- May not work with system
+
+**Our Approach (✅ Used)**:
+```
+Engine Structure → User Instructions → LLM fills values → Validate → Apply
+```
+- Engine creates structure
+- LLM fills in values
+- Output always valid
+- Always works with system
+
+### Benefits
+
+1. **Consistency**: All templates follow the same structure, predictable output format
+2. **Compatibility**: All generated templates work with the system, no surprises
+3. **Control**: Engine controls what's possible, LLM can't break the system
+4. **Maintainability**: Structure changes are explicit, easy version control
+
+## Quick Reference: Core Features
+
+### 1. AI Design Assistant
+- **Color Palette Generation**: "Generate a professional color scheme for a primary school"
+- **Layout Suggestions**: AI suggests optimal layouts for each section
+- **Template Generation**: Creates custom templates based on school information
+- **Design Optimization**: "Make this design more modern" or "Optimize for mobile"
+
+### 2. Visual Customization (Only)
+- ✅ Colors (primary, secondary, accent, backgrounds, text)
+- ✅ Typography (fonts, sizes, weights)
+- ✅ Spacing and layouts
+- ✅ Component styles (buttons, cards, forms)
+- ✅ Animations and transitions
+- ❌ **NOT** functionality (all schools have same features)
+
+### 3. Template System
+- Pre-built templates for different school types
+- AI-generated custom templates (structure-constrained)
+- Easy template switching
+- Template marketplace (future)
+
+### 4. Version Control
+- Save multiple theme versions
+- Revert to previous versions
+- Compare versions side-by-side
+- Publish when ready
+
+## User Workflows
+
+### For School Admin
+
+1. **Access Theme Editor** (`/cms/design/theme-editor`)
+2. **Choose Starting Point**:
+   - Start from template (pre-filled structure)
+   - Generate with AI (engine creates structure, LLM fills values)
+   - Start from scratch (engine creates empty structure)
+3. **Customize**:
+   - Adjust colors (within structure constraints)
+   - Change fonts (within structure constraints)
+   - Modify component styles (within structure constraints)
+   - See live preview
+4. **Get AI Help** (optional):
+   - Ask for color suggestions (structure-constrained)
+   - Request layout improvements (structure-constrained)
+   - Get design recommendations (structure-constrained)
+5. **Save & Publish**:
+   - Save as draft
+   - Preview changes
+   - Publish when ready
+
+### For Content Editors
+
+1. **Use CMS Portal** (existing)
+2. **Manage Content**:
+   - Edit hero section text
+   - Add/remove notices
+   - Update admissions form
+   - Manage pages
+3. **Content is separate from design** - they don't need to worry about styling
+
+## Comparison with Hostinger AI Builder
+
+| Feature | Hostinger | Our System |
+|---------|-----------|------------|
+| AI Template Generation | ✅ | ✅ (Structure-constrained) |
+| Color Palette AI | ✅ | ✅ (Structure-constrained) |
+| Content AI | ✅ | ✅ |
+| **School-Specific Features** | ❌ | ✅ |
+| **CMS Integration** | Basic | Advanced |
+| **Version Control** | Limited | Full |
+| **Component Customization** | Basic | Advanced |
+| **Template Structure Priority** | ❌ | ✅ (Core principle) |
+
+## Conclusion
+
+This AI-centered website design system will empower schools to create beautiful, customized websites while maintaining functional consistency. The separation of content (CMS) and style (Theme Editor) ensures that schools can focus on their unique visual identity while the platform handles all the complex functionality.
+
+**The template structure-first approach ensures that all AI-generated content works seamlessly with the system**, while still allowing creative customization within defined bounds. The AI integration will make design accessible to non-designers, while the template system provides a solid foundation. The version control and preview features ensure schools can experiment safely before publishing.
+
+This approach guarantees consistency, compatibility, and maintainability while still providing the flexibility and AI assistance that modern users expect.

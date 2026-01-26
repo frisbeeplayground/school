@@ -470,3 +470,387 @@ export type EnrollmentStatus = "active" | "completed" | "dropped" | "transferred
 export type AdmissionStatus = "inquiry" | "applied" | "documents_pending" | "under_review" | "interview_scheduled" | "accepted" | "rejected" | "enrolled" | "withdrawn";
 export type AdmissionSource = "website" | "walk_in" | "referral" | "event" | "advertisement" | "social_media" | "other";
 export type AttendanceStatus = "present" | "absent" | "late" | "excused" | "half_day";
+
+// ============ WEBSITE THEMING SYSTEM ============
+
+// Design Tokens TypeScript Types (Template Structure)
+export interface ColorTokens {
+  primary: string;
+  secondary: string;
+  accent: string;
+  background: string;
+  surface: string;
+  text: {
+    primary: string;
+    secondary: string;
+    muted: string;
+  };
+  border: string;
+  error: string;
+  success: string;
+  warning: string;
+  info: string;
+}
+
+export interface TypographyTokens {
+  fontFamily: {
+    heading: string;
+    body: string;
+    mono: string;
+  };
+  fontSize: {
+    xs: string;
+    sm: string;
+    base: string;
+    lg: string;
+    xl: string;
+    "2xl": string;
+    "3xl": string;
+    "4xl": string;
+    "5xl": string;
+  };
+  fontWeight: {
+    light: number;
+    normal: number;
+    medium: number;
+    semibold: number;
+    bold: number;
+  };
+  lineHeight: {
+    tight: number;
+    normal: number;
+    relaxed: number;
+  };
+}
+
+export interface SpacingTokens {
+  scale: string;
+  unit: string;
+}
+
+export interface BorderRadiusTokens {
+  none: string;
+  sm: string;
+  base: string;
+  md: string;
+  lg: string;
+  xl: string;
+  full: string;
+}
+
+export interface ShadowTokens {
+  sm: string;
+  base: string;
+  md: string;
+  lg: string;
+  xl: string;
+}
+
+export interface BreakpointTokens {
+  sm: string;
+  md: string;
+  lg: string;
+  xl: string;
+  "2xl": string;
+}
+
+export interface DesignTokens {
+  colors: ColorTokens;
+  typography: TypographyTokens;
+  spacing: SpacingTokens;
+  borderRadius: BorderRadiusTokens;
+  shadows: ShadowTokens;
+  breakpoints: BreakpointTokens;
+}
+
+export interface ComponentVariant {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface ComponentDefinition {
+  type: string;
+  variants: ComponentVariant[];
+  defaultVariant: string;
+}
+
+export interface LayoutDefinition {
+  alignment: "left" | "center" | "right";
+  contentWidth: "narrow" | "medium" | "wide" | "full";
+  spacing: "compact" | "normal" | "relaxed";
+}
+
+export interface TemplateStructure {
+  version: string;
+  templateId: string;
+  templateName: string;
+  designTokens: DesignTokens;
+  components: {
+    hero: ComponentDefinition;
+    features: ComponentDefinition;
+    about: ComponentDefinition;
+    stats: ComponentDefinition;
+    cta: ComponentDefinition;
+    notices: ComponentDefinition;
+    contact: ComponentDefinition;
+    footer: ComponentDefinition;
+  };
+  layouts: {
+    hero: LayoutDefinition;
+    content: LayoutDefinition;
+    footer: LayoutDefinition;
+  };
+}
+
+// Default Design Tokens
+export const defaultDesignTokens: DesignTokens = {
+  colors: {
+    primary: "#3B82F6",
+    secondary: "#8B5CF6",
+    accent: "#F59E0B",
+    background: "#FFFFFF",
+    surface: "#F9FAFB",
+    text: {
+      primary: "#111827",
+      secondary: "#6B7280",
+      muted: "#9CA3AF",
+    },
+    border: "#E5E7EB",
+    error: "#EF4444",
+    success: "#10B981",
+    warning: "#F59E0B",
+    info: "#3B82F6",
+  },
+  typography: {
+    fontFamily: {
+      heading: "Playfair Display, serif",
+      body: "Inter, sans-serif",
+      mono: "JetBrains Mono, monospace",
+    },
+    fontSize: {
+      xs: "0.75rem",
+      sm: "0.875rem",
+      base: "1rem",
+      lg: "1.125rem",
+      xl: "1.25rem",
+      "2xl": "1.5rem",
+      "3xl": "1.875rem",
+      "4xl": "2.25rem",
+      "5xl": "3rem",
+    },
+    fontWeight: {
+      light: 300,
+      normal: 400,
+      medium: 500,
+      semibold: 600,
+      bold: 700,
+    },
+    lineHeight: {
+      tight: 1.25,
+      normal: 1.5,
+      relaxed: 1.75,
+    },
+  },
+  spacing: {
+    scale: "1.25",
+    unit: "0.25rem",
+  },
+  borderRadius: {
+    none: "0",
+    sm: "0.125rem",
+    base: "0.25rem",
+    md: "0.375rem",
+    lg: "0.5rem",
+    xl: "0.75rem",
+    full: "9999px",
+  },
+  shadows: {
+    sm: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+    base: "0 1px 3px 0 rgba(0, 0, 0, 0.1)",
+    md: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+    lg: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+    xl: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+  },
+  breakpoints: {
+    sm: "640px",
+    md: "768px",
+    lg: "1024px",
+    xl: "1280px",
+    "2xl": "1536px",
+  },
+};
+
+// Website Themes table
+export const websiteThemes = pgTable("website_themes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  schoolId: varchar("school_id").notNull().references(() => schools.id),
+  name: text("name").notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  isDefault: boolean("is_default").notNull().default(false),
+  version: integer("version").notNull().default(1),
+  designTokens: jsonb("design_tokens").notNull().default({}),
+  config: jsonb("config").notNull().default({}),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const websiteThemesRelations = relations(websiteThemes, ({ one, many }) => ({
+  school: one(schools, { fields: [websiteThemes.schoolId], references: [schools.id] }),
+  customizations: many(componentCustomizations),
+  versions: many(themeVersions),
+}));
+
+export const insertWebsiteThemeSchema = createInsertSchema(websiteThemes).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertWebsiteTheme = z.infer<typeof insertWebsiteThemeSchema>;
+export type WebsiteTheme = typeof websiteThemes.$inferSelect;
+
+// Component Customizations table
+export const componentCustomizations = pgTable("component_customizations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  themeId: varchar("theme_id").notNull().references(() => websiteThemes.id),
+  componentType: text("component_type").notNull(),
+  componentId: varchar("component_id"),
+  styles: jsonb("styles").notNull().default({}),
+  layout: jsonb("layout").notNull().default({}),
+  variants: jsonb("variants").notNull().default({}),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const componentCustomizationsRelations = relations(componentCustomizations, ({ one }) => ({
+  theme: one(websiteThemes, { fields: [componentCustomizations.themeId], references: [websiteThemes.id] }),
+}));
+
+export const insertComponentCustomizationSchema = createInsertSchema(componentCustomizations).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertComponentCustomization = z.infer<typeof insertComponentCustomizationSchema>;
+export type ComponentCustomization = typeof componentCustomizations.$inferSelect;
+
+// Theme Versions table
+export const themeVersions = pgTable("theme_versions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  themeId: varchar("theme_id").notNull().references(() => websiteThemes.id),
+  versionNumber: integer("version_number").notNull(),
+  configSnapshot: jsonb("config_snapshot").notNull(),
+  designTokensSnapshot: jsonb("design_tokens_snapshot").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdBy: varchar("created_by"),
+});
+
+export const themeVersionsRelations = relations(themeVersions, ({ one }) => ({
+  theme: one(websiteThemes, { fields: [themeVersions.themeId], references: [websiteThemes.id] }),
+}));
+
+export const insertThemeVersionSchema = createInsertSchema(themeVersions).omit({ id: true, createdAt: true });
+export type InsertThemeVersion = z.infer<typeof insertThemeVersionSchema>;
+export type ThemeVersion = typeof themeVersions.$inferSelect;
+
+// AI Design Suggestions table
+export const aiDesignSuggestions = pgTable("ai_design_suggestions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  schoolId: varchar("school_id").notNull().references(() => schools.id),
+  suggestionType: text("suggestion_type").notNull(),
+  prompt: text("prompt"),
+  generatedConfig: jsonb("generated_config").notNull(),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const aiDesignSuggestionsRelations = relations(aiDesignSuggestions, ({ one }) => ({
+  school: one(schools, { fields: [aiDesignSuggestions.schoolId], references: [schools.id] }),
+}));
+
+const suggestionStatusEnum = z.enum(["pending", "accepted", "rejected"]);
+const suggestionTypeEnum = z.enum(["color_palette", "typography", "layout", "full_template"]);
+
+export const insertAiDesignSuggestionSchema = createInsertSchema(aiDesignSuggestions)
+  .omit({ id: true, createdAt: true })
+  .extend({
+    status: suggestionStatusEnum.default("pending"),
+    suggestionType: suggestionTypeEnum,
+  });
+export type InsertAiDesignSuggestion = z.infer<typeof insertAiDesignSuggestionSchema>;
+export type AiDesignSuggestion = typeof aiDesignSuggestions.$inferSelect;
+
+// Zod schema for design tokens validation
+export const designTokensSchema = z.object({
+  colors: z.object({
+    primary: z.string(),
+    secondary: z.string(),
+    accent: z.string(),
+    background: z.string(),
+    surface: z.string(),
+    text: z.object({
+      primary: z.string(),
+      secondary: z.string(),
+      muted: z.string(),
+    }),
+    border: z.string(),
+    error: z.string(),
+    success: z.string(),
+    warning: z.string(),
+    info: z.string(),
+  }),
+  typography: z.object({
+    fontFamily: z.object({
+      heading: z.string(),
+      body: z.string(),
+      mono: z.string(),
+    }),
+    fontSize: z.object({
+      xs: z.string(),
+      sm: z.string(),
+      base: z.string(),
+      lg: z.string(),
+      xl: z.string(),
+      "2xl": z.string(),
+      "3xl": z.string(),
+      "4xl": z.string(),
+      "5xl": z.string(),
+    }),
+    fontWeight: z.object({
+      light: z.number(),
+      normal: z.number(),
+      medium: z.number(),
+      semibold: z.number(),
+      bold: z.number(),
+    }),
+    lineHeight: z.object({
+      tight: z.number(),
+      normal: z.number(),
+      relaxed: z.number(),
+    }),
+  }),
+  spacing: z.object({
+    scale: z.string(),
+    unit: z.string(),
+  }),
+  borderRadius: z.object({
+    none: z.string(),
+    sm: z.string(),
+    base: z.string(),
+    md: z.string(),
+    lg: z.string(),
+    xl: z.string(),
+    full: z.string(),
+  }),
+  shadows: z.object({
+    sm: z.string(),
+    base: z.string(),
+    md: z.string(),
+    lg: z.string(),
+    xl: z.string(),
+  }),
+  breakpoints: z.object({
+    sm: z.string(),
+    md: z.string(),
+    lg: z.string(),
+    xl: z.string(),
+    "2xl": z.string(),
+  }),
+});
+
+// Type exports for theming
+export type SuggestionStatus = "pending" | "accepted" | "rejected";
+export type SuggestionType = "color_palette" | "typography" | "layout" | "full_template";

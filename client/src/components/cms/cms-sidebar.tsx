@@ -24,6 +24,7 @@ import {
   BookOpen,
   CalendarCheck,
   ClipboardList,
+  Palette,
 } from "lucide-react";
 import { EnvironmentBadge } from "./environment-badge";
 import { useCMS } from "@/lib/cms-context";
@@ -85,6 +86,11 @@ const bottomItems = [
     title: "Preview Website",
     url: "/preview",
     icon: Eye,
+  },
+  {
+    title: "Theme Editor",
+    url: "/cms/theme-editor",
+    icon: Palette,
   },
   {
     title: "Settings",

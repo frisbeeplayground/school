@@ -16,6 +16,10 @@ import {
   insertAttendanceSchema,
   insertGradeSchema,
   insertProgressTokenSchema,
+  insertWebsiteThemeSchema,
+  insertComponentCustomizationSchema,
+  designTokensSchema,
+  defaultDesignTokens,
 } from "@shared/schema";
 import { randomBytes } from "crypto";
 
@@ -1560,6 +1564,218 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching portal data:", error);
       res.status(500).json({ error: "Failed to fetch student progress" });
+    }
+  });
+
+  // ============ WEBSITE THEMES API ROUTES ============
+
+  // Get all themes for a school
+  app.get("/api/schools/:schoolId/themes", async (req, res) => {
+    try {
+      const themes = await storage.getThemes(req.params.schoolId);
+      res.json(themes);
+    } catch (error) {
+      console.error("Error fetching themes:", error);
+      res.status(500).json({ error: "Failed to fetch themes" });
+    }
+  });
+
+  // Get a specific theme
+  app.get("/api/themes/:id", async (req, res) => {
+    try {
+      const theme = await storage.getTheme(req.params.id);
+      if (!theme) {
+        return res.status(404).json({ error: "Theme not found" });
+      }
+      res.json(theme);
+    } catch (error) {
+      console.error("Error fetching theme:", error);
+      res.status(500).json({ error: "Failed to fetch theme" });
+    }
+  });
+
+  // Get active theme for a school
+  app.get("/api/schools/:schoolId/themes/active", async (req, res) => {
+    try {
+      const theme = await storage.getActiveTheme(req.params.schoolId);
+      if (!theme) {
+        // Return default design tokens if no active theme
+        return res.json({ 
+          isDefault: true,
+          designTokens: defaultDesignTokens 
+        });
+      }
+      res.json(theme);
+    } catch (error) {
+      console.error("Error fetching active theme:", error);
+      res.status(500).json({ error: "Failed to fetch active theme" });
+    }
+  });
+
+  // Create a new theme
+  app.post("/api/schools/:schoolId/themes", async (req, res) => {
+    try {
+      const parsed = insertWebsiteThemeSchema.safeParse({
+        ...req.body,
+        schoolId: req.params.schoolId,
+      });
+      
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.errors });
+      }
+      
+      const theme = await storage.createTheme(parsed.data);
+      res.status(201).json(theme);
+    } catch (error) {
+      console.error("Error creating theme:", error);
+      res.status(500).json({ error: "Failed to create theme" });
+    }
+  });
+
+  // Update a theme
+  app.patch("/api/themes/:id", async (req, res) => {
+    try {
+      // Validate design tokens if provided
+      if (req.body.designTokens) {
+        const tokenResult = designTokensSchema.safeParse(req.body.designTokens);
+        if (!tokenResult.success) {
+          return res.status(400).json({ error: "Invalid design tokens", details: tokenResult.error.errors });
+        }
+      }
+      
+      const theme = await storage.updateTheme(req.params.id, req.body);
+      if (!theme) {
+        return res.status(404).json({ error: "Theme not found" });
+      }
+      res.json(theme);
+    } catch (error) {
+      console.error("Error updating theme:", error);
+      res.status(500).json({ error: "Failed to update theme" });
+    }
+  });
+
+  // Delete a theme
+  app.delete("/api/themes/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteTheme(req.params.id);
+      if (!success) {
+        return res.status(404).json({ error: "Theme not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting theme:", error);
+      res.status(500).json({ error: "Failed to delete theme" });
+    }
+  });
+
+  // Activate a theme
+  app.post("/api/themes/:id/activate", async (req, res) => {
+    try {
+      const theme = await storage.activateTheme(req.params.id);
+      if (!theme) {
+        return res.status(404).json({ error: "Theme not found" });
+      }
+      res.json(theme);
+    } catch (error) {
+      console.error("Error activating theme:", error);
+      res.status(500).json({ error: "Failed to activate theme" });
+    }
+  });
+
+  // Create a theme version (snapshot)
+  app.post("/api/themes/:id/versions", async (req, res) => {
+    try {
+      const version = await storage.createThemeVersion(req.params.id, req.body.createdBy);
+      res.status(201).json(version);
+    } catch (error) {
+      console.error("Error creating theme version:", error);
+      res.status(500).json({ error: "Failed to create theme version" });
+    }
+  });
+
+  // Get theme versions
+  app.get("/api/themes/:id/versions", async (req, res) => {
+    try {
+      const versions = await storage.getThemeVersions(req.params.id);
+      res.json(versions);
+    } catch (error) {
+      console.error("Error fetching theme versions:", error);
+      res.status(500).json({ error: "Failed to fetch theme versions" });
+    }
+  });
+
+  // Revert to a specific version
+  app.post("/api/theme-versions/:versionId/revert", async (req, res) => {
+    try {
+      const theme = await storage.revertToVersion(req.params.versionId);
+      if (!theme) {
+        return res.status(404).json({ error: "Version not found" });
+      }
+      res.json(theme);
+    } catch (error) {
+      console.error("Error reverting theme:", error);
+      res.status(500).json({ error: "Failed to revert theme" });
+    }
+  });
+
+  // Component Customizations
+  app.get("/api/themes/:themeId/customizations", async (req, res) => {
+    try {
+      const customizations = await storage.getComponentCustomizations(req.params.themeId);
+      res.json(customizations);
+    } catch (error) {
+      console.error("Error fetching customizations:", error);
+      res.status(500).json({ error: "Failed to fetch customizations" });
+    }
+  });
+
+  app.post("/api/themes/:themeId/customizations", async (req, res) => {
+    try {
+      const parsed = insertComponentCustomizationSchema.safeParse({
+        ...req.body,
+        themeId: req.params.themeId,
+      });
+      
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.errors });
+      }
+      
+      const customization = await storage.saveComponentCustomization(parsed.data);
+      res.status(201).json(customization);
+    } catch (error) {
+      console.error("Error saving customization:", error);
+      res.status(500).json({ error: "Failed to save customization" });
+    }
+  });
+
+  // Public Theme API (for school websites)
+  app.get("/api/public/theme/:slug", async (req, res) => {
+    try {
+      const school = await storage.getSchoolBySlug(req.params.slug);
+      if (!school) {
+        return res.json({ isDefault: true, designTokens: defaultDesignTokens });
+      }
+
+      const theme = await storage.getActiveTheme(school.id);
+      if (!theme) {
+        // Return school colors as primary/secondary with defaults
+        return res.json({
+          isDefault: true,
+          designTokens: {
+            ...defaultDesignTokens,
+            colors: {
+              ...defaultDesignTokens.colors,
+              primary: school.primaryColor,
+              secondary: school.secondaryColor,
+            },
+          },
+        });
+      }
+
+      res.json(theme);
+    } catch (error) {
+      console.error("Error fetching public theme:", error);
+      res.status(500).json({ error: "Failed to fetch theme" });
     }
   });
 
