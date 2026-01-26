@@ -22,6 +22,8 @@ interface InquiryFormProps {
 }
 
 export function InquiryForm({ school }: InquiryFormProps) {
+  const primaryColor = `var(--theme-primary, ${school.primaryColor})`;
+  const secondaryColor = `var(--theme-secondary, ${school.secondaryColor})`;
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
   const [formData, setFormData] = useState({
@@ -79,9 +81,9 @@ export function InquiryForm({ school }: InquiryFormProps) {
         <CardContent className="pt-12 pb-12 text-center">
           <div
             className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
-            style={{ backgroundColor: `${school.primaryColor}15` }}
+            style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 15%, transparent)` }}
           >
-            <CheckCircle className="w-8 h-8" style={{ color: school.primaryColor }} />
+            <CheckCircle className="w-8 h-8" style={{ color: primaryColor }} />
           </div>
           <h3 className="text-2xl font-semibold text-gray-900 mb-2">Thank You!</h3>
           <p className="text-gray-600">
@@ -189,7 +191,7 @@ export function InquiryForm({ school }: InquiryFormProps) {
             className="w-full gap-2"
             disabled={submitMutation.isPending}
             style={{
-              background: `linear-gradient(135deg, ${school.primaryColor} 0%, ${school.secondaryColor} 100%)`,
+              background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`,
             }}
             data-testid="button-submit-inquiry"
           >

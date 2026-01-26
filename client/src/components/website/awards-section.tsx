@@ -32,21 +32,23 @@ const awards = [
   },
 ];
 
-export function AwardsSection({}: AwardsSectionProps) {
+export function AwardsSection({ school }: AwardsSectionProps) {
+  const accentColor = `var(--theme-accent, #fbbf24)`;
+
   return (
     <section className="py-20 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative overflow-hidden">
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-10 left-10 w-40 h-40 border border-yellow-400 rounded-full" />
-        <div className="absolute bottom-20 right-20 w-60 h-60 border border-yellow-400 rounded-full" />
-        <div className="absolute top-1/2 left-1/3 w-20 h-20 border border-yellow-400 rounded-full" />
+        <div className="absolute top-10 left-10 w-40 h-40 border rounded-full" style={{ borderColor: accentColor }} />
+        <div className="absolute bottom-20 right-20 w-60 h-60 border rounded-full" style={{ borderColor: accentColor }} />
+        <div className="absolute top-1/2 left-1/3 w-20 h-20 border rounded-full" style={{ borderColor: accentColor }} />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16">
           <div className="inline-flex items-center justify-center gap-2 mb-4">
-            <div className="w-12 h-px bg-gradient-to-r from-transparent to-yellow-400" />
-            <Award className="w-8 h-8 text-yellow-400" />
-            <div className="w-12 h-px bg-gradient-to-l from-transparent to-yellow-400" />
+            <div className="w-12 h-px" style={{ background: `linear-gradient(to right, transparent, ${accentColor})` }} />
+            <Award className="w-8 h-8" style={{ color: accentColor }} />
+            <div className="w-12 h-px" style={{ background: `linear-gradient(to left, transparent, ${accentColor})` }} />
           </div>
           <h2 className="font-serif text-4xl md:text-5xl font-bold text-white mb-4">
             Our Awards & Recognition
@@ -62,11 +64,14 @@ export function AwardsSection({}: AwardsSectionProps) {
               key={index}
               className="group relative"
             >
-              <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 h-full hover:border-yellow-400/50 transition-all duration-300 hover:transform hover:-translate-y-2">
+              <div 
+                className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 h-full transition-all duration-300 hover:transform hover:-translate-y-2"
+                style={{ ['--hover-border-color' as string]: `color-mix(in srgb, ${accentColor} 50%, transparent)` }}
+              >
                 <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${award.color} flex items-center justify-center mb-5 shadow-lg group-hover:scale-110 transition-transform`}>
                   <award.icon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-white mb-3 group-hover:text-yellow-400 transition-colors">
+                <h3 className="text-xl font-semibold text-white mb-3 transition-colors" style={{ ['--hover-color' as string]: accentColor }}>
                   {award.title}
                 </h3>
                 <p className="text-gray-400 text-sm leading-relaxed">
