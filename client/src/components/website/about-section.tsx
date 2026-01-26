@@ -15,6 +15,9 @@ const highlights = [
 ];
 
 export function AboutSection({ props, school }: AboutSectionProps) {
+  const primaryColor = `var(--theme-primary, ${school.primaryColor})`;
+  const secondaryColor = `var(--theme-secondary, ${school.secondaryColor})`;
+
   return (
     <section className="py-24 relative overflow-hidden" id="about">
       <div className="absolute top-1/2 right-0 w-96 h-96 bg-gradient-to-l from-blue-100 to-transparent rounded-full blur-3xl opacity-50 -translate-y-1/2" />
@@ -22,7 +25,10 @@ export function AboutSection({ props, school }: AboutSectionProps) {
       <div className="container mx-auto px-4">
         <div className="grid gap-16 lg:grid-cols-2 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-sm font-medium rounded-full px-4 py-1.5 mb-6">
+            <div 
+              className="inline-flex items-center gap-2 text-white text-sm font-medium rounded-full px-4 py-1.5 mb-6"
+              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
+            >
               <Heart className="w-4 h-4" />
               About Our School
             </div>
@@ -48,11 +54,11 @@ export function AboutSection({ props, school }: AboutSectionProps) {
                 >
                   <div
                     className="w-10 h-10 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: `${school.primaryColor}15` }}
+                    style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 15%, transparent)` }}
                   >
                     <item.icon
                       className="h-5 w-5"
-                      style={{ color: school.primaryColor }}
+                      style={{ color: primaryColor }}
                     />
                   </div>
                   <span className="text-sm font-medium text-gray-700">{item.text}</span>
@@ -62,7 +68,8 @@ export function AboutSection({ props, school }: AboutSectionProps) {
             
             <Button
               size="lg"
-              className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg"
+              className="gap-2 text-white shadow-lg"
+              style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
               data-testid="button-learn-more"
             >
               Learn More About Us
@@ -77,7 +84,7 @@ export function AboutSection({ props, school }: AboutSectionProps) {
                 style={{
                   background: props.image
                     ? `url(${props.image}) center/cover`
-                    : `linear-gradient(135deg, ${school.primaryColor} 0%, ${school.secondaryColor} 50%, #7c3aed 100%)`,
+                    : `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 50%, #7c3aed 100%)`,
                 }}
               >
                 {!props.image && (

@@ -51,6 +51,19 @@ The core entities are:
 
 Content supports dual environments (`sandbox` | `live`) and status workflow (`draft` | `pending_approval` | `published`).
 
+**Website Theming System:**
+- **WebsiteThemes** - Per-school theme definitions with DesignTokens (colors, typography, spacing, shadows, breakpoints)
+- **ComponentCustomizations** - Per-component styling overrides with variant selection
+- **ThemeVersions** - Theme version history for rollback capability
+- **AIDesignSuggestions** - Placeholder for AI-assisted design recommendations
+
+**Theme Architecture:**
+- DesignTokens stored as JSONB with full color palette, typography scales, spacing, border-radius, and shadows
+- CSS variables generated at runtime via `injectThemeStyles()` utility
+- Public websites consume themes via `/api/public/theme/:slug` endpoint
+- Theme Editor at `/cms/theme-editor` with color picker, typography controls, and live preview
+- Fallback to school's primaryColor/secondaryColor when no theme is active
+
 ### Routing Structure
 - `/` - Landing page
 - `/cms/*` - Admin CMS interface (dashboard, sections, notices, approvals, settings)
@@ -62,6 +75,7 @@ Content supports dual environments (`sandbox` | `live`) and status workflow (`dr
 - `/site/:slug` - Live public website per school
 - `/preview/:slug` - Sandbox preview per school
 - `/portal/:token` - Parent portal access via secure progress token (QR-based access)
+- `/cms/theme-editor` - Website theme customization interface
 
 ### Design System
 - **CMS Admin**: Material Design principles - Inter font, information-dense layouts, clear workflow states

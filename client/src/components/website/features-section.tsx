@@ -37,7 +37,9 @@ interface FeaturesSectionProps {
   school: School;
 }
 
-export function FeaturesSection({ props }: FeaturesSectionProps) {
+export function FeaturesSection({ props, school }: FeaturesSectionProps) {
+  const primaryColor = `var(--theme-primary, ${school.primaryColor})`;
+  const secondaryColor = `var(--theme-secondary, ${school.secondaryColor})`;
   const features = props.features || [
     {
       icon: "book",
@@ -78,7 +80,10 @@ export function FeaturesSection({ props }: FeaturesSectionProps) {
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-16">
-          <span className="inline-block px-4 py-1.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm font-medium rounded-full mb-4">
+          <span 
+            className="inline-block px-4 py-1.5 text-white text-sm font-medium rounded-full mb-4"
+            style={{ background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` }}
+          >
             Why Choose Us
           </span>
           <h2

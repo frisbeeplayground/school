@@ -8,13 +8,16 @@ interface CTASectionProps {
 }
 
 export function CTASection({ props, school }: CTASectionProps) {
+  const primaryColor = `var(--theme-primary, ${school.primaryColor})`;
+  const secondaryColor = `var(--theme-secondary, ${school.secondaryColor})`;
+
   return (
     <section className="py-24" id="cta">
       <div className="container mx-auto px-4">
         <div
           className="rounded-3xl p-12 md:p-20 text-center text-white relative overflow-hidden"
           style={{
-            background: `linear-gradient(135deg, ${school.primaryColor} 0%, ${school.secondaryColor} 50%, #7c3aed 100%)`,
+            background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 50%, #7c3aed 100%)`,
           }}
         >
           <div className="absolute inset-0 overflow-hidden pointer-events-none">

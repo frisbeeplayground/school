@@ -35,6 +35,9 @@ const resources = [
 ];
 
 export function WebsiteFooter({ school }: WebsiteFooterProps) {
+  const primaryColor = `var(--theme-primary, ${school.primaryColor})`;
+  const secondaryColor = `var(--theme-secondary, ${school.secondaryColor})`;
+
   return (
     <footer className="bg-gradient-to-b from-gray-900 to-gray-950 text-gray-300">
       <div className="container mx-auto px-4 py-20">
@@ -44,7 +47,7 @@ export function WebsiteFooter({ school }: WebsiteFooterProps) {
               <div
                 className="flex h-12 w-12 items-center justify-center rounded-xl shadow-lg"
                 style={{ 
-                  background: `linear-gradient(135deg, ${school.primaryColor} 0%, ${school.secondaryColor} 100%)` 
+                  background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` 
                 }}
               >
                 <GraduationCap className="h-6 w-6 text-white" />
@@ -181,7 +184,7 @@ export function WebsiteFooter({ school }: WebsiteFooterProps) {
                   size="icon"
                   className="shrink-0 rounded-xl"
                   style={{ 
-                    background: `linear-gradient(135deg, ${school.primaryColor} 0%, ${school.secondaryColor} 100%)` 
+                    background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` 
                   }}
                   data-testid="button-newsletter"
                 >

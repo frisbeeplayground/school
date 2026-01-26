@@ -7,6 +7,9 @@ interface InquirySectionProps {
 }
 
 export function InquirySection({ school }: InquirySectionProps) {
+  const primaryColor = `var(--theme-primary, ${school.primaryColor})`;
+  const successColor = `var(--theme-success, #10b981)`;
+
   return (
     <section className="py-24 bg-gray-50 relative overflow-hidden" id="contact">
       <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-blue-100 to-transparent rounded-full blur-3xl opacity-50" />
@@ -14,7 +17,10 @@ export function InquirySection({ school }: InquirySectionProps) {
       
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-sm font-medium rounded-full px-4 py-1.5 mb-4">
+          <div 
+            className="inline-flex items-center gap-2 text-white text-sm font-medium rounded-full px-4 py-1.5 mb-4"
+            style={{ background: successColor }}
+          >
             <MessageCircle className="w-4 h-4" />
             Get in Touch
           </div>
@@ -42,14 +48,14 @@ export function InquirySection({ school }: InquirySectionProps) {
               <div className="flex items-start gap-4 p-4 rounded-xl bg-white shadow-sm border border-gray-100">
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${school.primaryColor}15` }}
+                  style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 15%, transparent)` }}
                 >
-                  <Phone className="w-5 h-5" style={{ color: school.primaryColor }} />
+                  <Phone className="w-5 h-5" style={{ color: primaryColor }} />
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">Call Us</h4>
                   <p className="text-gray-600 text-sm">{school.operatingHours || "Mon-Fri 8am to 5pm"}</p>
-                  <a href={`tel:${school.phone || "+1555000000"}`} className="text-primary font-medium hover:underline">
+                  <a href={`tel:${school.phone || "+1555000000"}`} className="font-medium hover:underline" style={{ color: primaryColor }}>
                     {school.phone || "+1 (555) 000-0000"}
                   </a>
                 </div>
@@ -58,14 +64,14 @@ export function InquirySection({ school }: InquirySectionProps) {
               <div className="flex items-start gap-4 p-4 rounded-xl bg-white shadow-sm border border-gray-100">
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${school.primaryColor}15` }}
+                  style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 15%, transparent)` }}
                 >
-                  <Mail className="w-5 h-5" style={{ color: school.primaryColor }} />
+                  <Mail className="w-5 h-5" style={{ color: primaryColor }} />
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">Email Us</h4>
                   <p className="text-gray-600 text-sm">We'll respond within 24 hours</p>
-                  <a href={`mailto:${school.email || `admissions@${school.slug}.edu`}`} className="text-primary font-medium hover:underline">
+                  <a href={`mailto:${school.email || `admissions@${school.slug}.edu`}`} className="font-medium hover:underline" style={{ color: primaryColor }}>
                     {school.email || `admissions@${school.slug}.edu`}
                   </a>
                 </div>
@@ -74,9 +80,9 @@ export function InquirySection({ school }: InquirySectionProps) {
               <div className="flex items-start gap-4 p-4 rounded-xl bg-white shadow-sm border border-gray-100">
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${school.primaryColor}15` }}
+                  style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 15%, transparent)` }}
                 >
-                  <MapPin className="w-5 h-5" style={{ color: school.primaryColor }} />
+                  <MapPin className="w-5 h-5" style={{ color: primaryColor }} />
                 </div>
                 <div>
                   <h4 className="font-semibold text-gray-900">Visit Us</h4>

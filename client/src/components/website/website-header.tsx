@@ -19,6 +19,8 @@ const navLinks = [
 
 export function WebsiteHeader({ school, isPreview }: WebsiteHeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const primaryColor = `var(--theme-primary, ${school.primaryColor})`;
+  const secondaryColor = `var(--theme-secondary, ${school.secondaryColor})`;
 
   return (
     <>
@@ -57,7 +59,7 @@ export function WebsiteHeader({ school, isPreview }: WebsiteHeaderProps) {
               <div
                 className="flex h-12 w-12 items-center justify-center rounded-xl shadow-lg"
                 style={{ 
-                  background: `linear-gradient(135deg, ${school.primaryColor} 0%, ${school.secondaryColor} 100%)` 
+                  background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` 
                 }}
               >
                 <GraduationCap className="h-6 w-6 text-white" />
@@ -94,7 +96,7 @@ export function WebsiteHeader({ school, isPreview }: WebsiteHeaderProps) {
               <Button
                 className="font-medium shadow-lg"
                 style={{ 
-                  background: `linear-gradient(135deg, ${school.primaryColor} 0%, ${school.secondaryColor} 100%)` 
+                  background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` 
                 }}
                 data-testid="button-apply"
               >
@@ -113,7 +115,7 @@ export function WebsiteHeader({ school, isPreview }: WebsiteHeaderProps) {
                   <div className="flex items-center gap-3 pb-6 border-b">
                     <div
                       className="flex h-10 w-10 items-center justify-center rounded-lg"
-                      style={{ backgroundColor: school.primaryColor }}
+                      style={{ backgroundColor: primaryColor }}
                     >
                       <GraduationCap className="h-5 w-5 text-white" />
                     </div>
@@ -134,7 +136,7 @@ export function WebsiteHeader({ school, isPreview }: WebsiteHeaderProps) {
                     <Button
                       className="w-full"
                       style={{ 
-                        background: `linear-gradient(135deg, ${school.primaryColor} 0%, ${school.secondaryColor} 100%)` 
+                        background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)` 
                       }}
                     >
                       Apply Now

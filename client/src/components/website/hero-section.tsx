@@ -8,6 +8,10 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ props, school }: HeroSectionProps) {
+  const primaryColor = `var(--theme-primary, ${school.primaryColor})`;
+  const secondaryColor = `var(--theme-secondary, ${school.secondaryColor})`;
+  const accentColor = `var(--theme-accent, #fbbf24)`;
+
   return (
     <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
       <div
@@ -15,7 +19,7 @@ export function HeroSection({ props, school }: HeroSectionProps) {
         style={{
           backgroundImage: props.backgroundImage
             ? `url(${props.backgroundImage})`
-            : `linear-gradient(135deg, ${school.primaryColor} 0%, ${school.secondaryColor} 50%, #7c3aed 100%)`,
+            : `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 50%, #7c3aed 100%)`,
         }}
       />
       <div className="absolute inset-0 bg-gradient-to-br from-black/70 via-black/50 to-transparent" />
@@ -23,11 +27,11 @@ export function HeroSection({ props, school }: HeroSectionProps) {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
           className="absolute top-20 left-10 w-20 h-20 rounded-full opacity-20 animate-bounce"
-          style={{ backgroundColor: school.secondaryColor, animationDuration: "4s" }}
+          style={{ backgroundColor: secondaryColor, animationDuration: "4s" }}
         />
         <div
           className="absolute top-40 right-20 w-16 h-16 rounded-full opacity-30 animate-pulse"
-          style={{ backgroundColor: "#fbbf24" }}
+          style={{ backgroundColor: accentColor }}
         />
         <div
           className="absolute bottom-40 left-20 w-12 h-12 rounded-full opacity-25 animate-spin"
@@ -39,7 +43,7 @@ export function HeroSection({ props, school }: HeroSectionProps) {
         />
         <div
           className="absolute bottom-1/4 right-10 w-24 h-24 rounded-full opacity-15 animate-bounce"
-          style={{ backgroundColor: school.primaryColor, animationDuration: "7s" }}
+          style={{ backgroundColor: primaryColor, animationDuration: "7s" }}
         />
         
         <div className="absolute top-1/4 left-1/4 animate-spin" style={{ animationDuration: "20s" }}>

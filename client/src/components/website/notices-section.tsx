@@ -10,6 +10,8 @@ interface NoticesSectionProps {
 }
 
 export function NoticesSection({ notices, school }: NoticesSectionProps) {
+  const primaryColor = `var(--theme-primary, ${school.primaryColor})`;
+  const accentColor = `var(--theme-accent, #f59e0b)`;
   const displayNotices = notices.slice(0, 4);
   const pinnedNotices = displayNotices.filter((n) => n.pinned);
   const regularNotices = displayNotices.filter((n) => !n.pinned);
@@ -23,7 +25,10 @@ export function NoticesSection({ notices, school }: NoticesSectionProps) {
       <div className="container mx-auto px-4 relative z-10">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-12">
           <div>
-            <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-sm font-medium rounded-full px-4 py-1.5 mb-4">
+            <div 
+              className="inline-flex items-center gap-2 text-white text-sm font-medium rounded-full px-4 py-1.5 mb-4"
+              style={{ background: accentColor }}
+            >
               <Megaphone className="w-4 h-4" />
               Latest Updates
             </div>
@@ -62,7 +67,7 @@ export function NoticesSection({ notices, school }: NoticesSectionProps) {
                 {notice.pinned && (
                   <div 
                     className="h-1 w-full"
-                    style={{ backgroundColor: school.primaryColor }}
+                    style={{ backgroundColor: primaryColor }}
                   />
                 )}
                 <CardHeader className="pb-2">
@@ -71,11 +76,11 @@ export function NoticesSection({ notices, school }: NoticesSectionProps) {
                       {notice.pinned && (
                         <div 
                           className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
-                          style={{ backgroundColor: `${school.primaryColor}15` }}
+                          style={{ backgroundColor: `color-mix(in srgb, ${primaryColor} 15%, transparent)` }}
                         >
                           <Pin
                             className="h-4 w-4 rotate-45"
-                            style={{ color: school.primaryColor }}
+                            style={{ color: primaryColor }}
                           />
                         </div>
                       )}

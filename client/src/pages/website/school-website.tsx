@@ -1,5 +1,6 @@
 import { useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { WebsiteHeader } from "@/components/website/website-header";
 import { HeroSection } from "@/components/website/hero-section";
 import { FeaturesSection } from "@/components/website/features-section";
@@ -10,6 +11,7 @@ import { NoticesSection } from "@/components/website/notices-section";
 import { CTASection } from "@/components/website/cta-section";
 import { InquirySection } from "@/components/website/inquiry-section";
 import { WebsiteFooter } from "@/components/website/website-footer";
+import { injectThemeStyles } from "@/lib/theme-utils";
 import type {
   School,
   PageSection,
@@ -19,7 +21,10 @@ import type {
   AboutProps,
   StatsProps,
   CTAProps,
+  WebsiteTheme,
+  DesignTokens,
 } from "@shared/schema";
+import { defaultDesignTokens } from "@shared/schema";
 import { Loader2 } from "lucide-react";
 
 export default function SchoolWebsite() {
@@ -53,6 +58,21 @@ export default function SchoolWebsite() {
     },
     enabled: !!school,
   });
+
+  const { data: activeTheme } = useQuery<WebsiteTheme | null>({
+    queryKey: [`/api/public/theme/${slug}`],
+    queryFn: async () => {
+      const res = await fetch(`/api/public/theme/${slug}`);
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!school,
+  });
+
+  useEffect(() => {
+    const tokens: DesignTokens = activeTheme?.designTokens as DesignTokens || defaultDesignTokens;
+    injectThemeStyles(tokens);
+  }, [activeTheme]);
 
   const isLoading = schoolLoading || sectionsLoading || noticesLoading;
 

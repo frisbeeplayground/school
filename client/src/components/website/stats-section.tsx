@@ -14,6 +14,8 @@ const defaultStats = [
 ];
 
 export function StatsSection({ props, school }: StatsSectionProps) {
+  const primaryColor = `var(--theme-primary, ${school.primaryColor})`;
+  const secondaryColor = `var(--theme-secondary, ${school.secondaryColor})`;
   const stats = props.stats?.length ? props.stats : defaultStats.map(s => ({ value: s.value, label: s.label }));
 
   return (
@@ -21,7 +23,7 @@ export function StatsSection({ props, school }: StatsSectionProps) {
       <div
         className="absolute inset-0"
         style={{
-          background: `linear-gradient(135deg, ${school.primaryColor} 0%, ${school.secondaryColor} 50%, #7c3aed 100%)`,
+          background: `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 50%, #7c3aed 100%)`,
         }}
       />
       <div className="absolute inset-0 bg-black/20" />
